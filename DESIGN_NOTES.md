@@ -6,42 +6,27 @@ in the spec wherever the two disagree.
 
 ---
 
-## 1. Reference image analysis — ⛔ BLOCKED, FILE NOT SUPPLIED
+## 1. Reference image — not supplied; building from the written spec
 
-`assets/reference/ui-reference.png` **does not exist.** The directory was created by this
-pass and is empty. A search of the entire working tree found no mockup, screenshot, or
-design comp of any kind — the only PNGs present are icons belonging to the bundled
-Remotion agent skills.
+`assets/reference/ui-reference.png` was never supplied. The directory exists and is empty;
+a search of the whole tree found no mockup or comp of any kind.
 
-`Claude.md` is explicit about what to do here:
+This was raised twice and **the decision was to proceed from the written specification**
+(2026-08-28). Recorded here because §6 says the image outranks the §6 prose wherever the
+two disagree — with no image, §6.2/§6.3/§6.5 are the contract, and they are precise enough
+to build from: literal radii, spacing steps, hex values, shadow stacks, easing curve and
+durations. What the image would have settled and the prose does not is:
 
-> **Appendix** — "If either folder is empty when the build starts, stop and ask for the
-> files rather than substituting Google Fonts or inventing a layout."
->
-> **§12.1** — "Read the reference image first. Write `DESIGN_NOTES.md` before any component."
->
-> **§12.8** — "Do not silently substitute, and do not paper over it with a fake."
+- **Layout structure** — sidebar vs. tab bar, column count, content max-width. §7 describes
+  screen *contents*, never their arrangement. Phase 1 will pick one and it will be a guess.
+- **Density** — which of the ten spacing steps actually get used, and where.
+- **Iconography weight beyond stroke width** — filled vs. outline, optical sizing.
+- **Where Arabic and Latin sit relative to each other** in the same row.
 
-So this section stays empty rather than being filled in from the §6 prose or from general
-"Apple-like" priors. Writing a plausible-sounding analysis of an image nobody has seen would
-produce exactly the fake the spec forbids, and it would be *worse* than nothing: every screen
-in the app is supposed to be checked against this section, so an invented contract silently
-misdirects all seven phases.
+Those four are the open risk. Everything else in §6 is specified numerically.
 
-**To unblock:** drop the mockup at `assets/reference/ui-reference.png`. It will then be
-analysed here under these headings, which are the ones the build actually consumes:
-
-| Heading | What gets extracted | Consumed by |
-|---|---|---|
-| Layout structure | sidebar vs. tab bar, column count, content max-width, toolbar height | §6.7, §7.1 |
-| Spacing rhythm | which steps of the 4px scale actually appear, and where | §6.2 |
-| Corner radii | measured radii per surface class, mapped onto xs/sm/md/lg/xl | §6.2 |
-| Colour temperature | measured warmth of bg/surface, accent hue, how far dark sits from black | §6.3 |
-| Typographic hierarchy | real size/weight ratios between hero, section head and body | §6.2 |
-| Iconography weight | stroke width, corner join, optical size, filled vs. outline | lucide 1.5px rule |
-| Arabic vs. Latin placement | which strings are Arabic, which Latin, and their relative sizes | §5, §9 |
-
-Until then, no component work starts. **Phase 0 has not begun.**
+If the image turns up later, it outranks what gets built and the affected screens get
+redone — that is the spec's rule, not a caveat being added here.
 
 ---
 
@@ -219,3 +204,72 @@ Recorded while checking prerequisites; not part of the visual contract.
 - The spec file in this repository is named `Claude.md`. Claude Code reads project memory
   from `CLAUDE.md`, and this filesystem is case-sensitive, so it is not being auto-loaded
   as memory — it is read explicitly. Renaming it would make that automatic.
+
+---
+
+## 4. Design-system decisions taken in Phase 0
+
+### 4.1 §6.3's accent contrast requirement is unsatisfiable as written — resolved as pairs
+
+§6.3 asks for six accents where "every accent must pass **4.5:1 contrast against both
+surface colours**". Taken literally against light `surface` `#FFFFFF` and dark `surface`
+`#1C1C1B`, **no colour exists that satisfies it**:
+
+| Constraint | Bound on the accent's relative luminance |
+|---|---|
+| 4.5:1 against `#FFFFFF` | **≤ 0.1833** |
+| 4.5:1 against `#1C1C1B` | **≥ 0.2270** |
+
+The window is empty. The requirement is not merely hard, it is arithmetically impossible —
+one surface is near-white and the other near-black, so a single colour cannot stand off both.
+
+**Resolution:** an accent is a **pair** — one shade tuned for light surfaces, one for dark,
+both the same hue. `--accent` aliases whichever the active theme defines, so components
+still read one token and no component knows a hex value. This is what §6.3 must have meant,
+since it also says the dark theme redefines tokens.
+
+Each shade is checked against **all three** surfaces its own theme paints — `bg`, `surface`
+and `surface-2` — not just `surface`, because the accent is drawn on all of them. The
+binding case is the *narrowest* gap in each theme: `bg #F7F6F3` for light, `surface-2
+#242423` for dark.
+
+| Accent | Light shade | worst light | Dark shade | worst dark |
+|---|---|---|---|---|
+| **green-teal** (default) | `#0F6F62` | 5.60:1 | `#3AA294` | 5.01:1 |
+| indigo | `#5B52C9` | 5.56:1 | `#8F88DD` | 4.98:1 |
+| plum | `#A62BB2` | 5.38:1 | `#D072D9` | 5.25:1 |
+| clay | `#A64A24` | 5.36:1 | `#D67C51` | 5.08:1 |
+| gold | `#835D1E` | 5.47:1 | `#B98D3D` | 5.13:1 |
+| slate | `#1F66AC` | 5.47:1 | `#5A97D2` | 5.03:1 |
+
+`scripts/check-contrast.mjs` enforces all 36 combinations and **fails the build** on any
+below 4.5:1, as §6.3 requires. It runs in `npm run build`.
+
+### 4.2 Window chrome: the transparency policy is decided by session type
+
+§6.7 wants rounded corners via `transparent: true`, and warns that X11 without a compositor
+produces black corners. Tauri fixes `transparent` when the window is built, not at runtime,
+so the window is **constructed in Rust** (`src-tauri/src/lib.rs`) rather than declared in
+`tauri.conf.json`, and `XDG_SESSION_TYPE` decides:
+
+| Session | Transparent | Corners | Shadow margin |
+|---|---|---|---|
+| `wayland` | yes | rounded, `--radius-xl` | 24px |
+| `x11` | no | square | 0 |
+| anything else | no | square | 0 |
+
+Wayland always composites, so it is the reliable case and the §2 primary target. X11 is
+treated as unreliable unconditionally rather than probing for a compositor — the failure
+mode is a visible black-corner artefact, and §6.7 says never ship it. The layout is
+identical either way; only translucency and the drawn shadow disappear. Maximised windows
+drop to square corners in both.
+
+Building the window in Rust also satisfies §8.1 for free: it is created with
+`.visible(false)` and shown explicitly, so there is no create-then-hide window flash when
+Phase 3 adds hidden startup.
+
+**Minimum window size:** §6.7 asks for 900×640 and separately for ~24px of transparent
+padding "accounted for in the window size". Read as *content* 900×640, so the OS minimum is
+948×688 on Wayland and 900×640 on X11 where there is no margin.
+
+---

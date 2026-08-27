@@ -1,0 +1,101 @@
+/* §6.7 window chrome. */
+
+.shell {
+  position: fixed;
+  inset: 0;
+  /* Transparent margin the drop shadow is drawn into. 0 on X11, where we are
+     opaque and the shadow cannot exist. */
+  padding: var(--frame-margin, 0px);
+}
+
+.window {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  border-radius: var(--frame-radius, 0px);
+  box-shadow: var(--frame-shadow, none);
+}
+
+/* §6.2: in dark mode a 1px top highlight replaces shadow as the depth cue. */
+.window::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 1px;
+  background: var(--top-highlight);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ---- Title bar ------------------------------------------------------- */
+
+.titlebar {
+  position: relative;
+  flex: 0 0 var(--titlebar-height);
+  height: var(--titlebar-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--space-3);
+  border-block-end: 1px solid var(--hairline);
+}
+
+.titlebar-title {
+  font-size: var(--text-caption);
+  font-weight: var(--weight-caption);
+  color: var(--text-2);
+  pointer-events: none;
+}
+
+/* Window controls sit on the physical right - GNOME convention (§6.7). This is
+   deliberately NOT a logical property: the buttons follow the desktop, not the
+   text direction, so they stay put when §9 flips the interface to RTL. */
+.window-controls {
+  position: absolute;
+  right: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.window-control {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-2);
+  cursor: default;
+  transition: background var(--duration-micro) var(--ease),
+              color var(--duration-micro) var(--ease);
+}
+.window-control:hover { background: var(--separator); color: var(--text); }
+.window-control:active { transform: scale(var(--press-scale)); }
+.window-control.close:hover { background: #D93A32; color: #FFFFFF; }
+
+.window-body { flex: 1; min-height: 0; overflow: auto; }
+
+/* ---- Resize edges ----------------------------------------------------- */
+/* §6.7: frameless windows lose server-side resize handles, so we implement them.
+   The hit zone spans the transparent margin plus 8px inside the visible edge. */
+
+.resize-handle { position: fixed; z-index: 10; }
+.resize-n  { top: 0; left: 0; right: 0; height: var(--grab); cursor: n-resize; }
+.resize-s  { bottom: 0; left: 0; right: 0; height: var(--grab); cursor: s-resize; }
+.resize-w  { left: 0; top: 0; bottom: 0; width: var(--grab); cursor: w-resize; }
+.resize-e  { right: 0; top: 0; bottom: 0; width: var(--grab); cursor: e-resize; }
+.resize-nw { top: 0; left: 0; width: var(--grab); height: var(--grab); cursor: nw-resize; }
+.resize-ne { top: 0; right: 0; width: var(--grab); height: var(--grab); cursor: ne-resize; }
+.resize-sw { bottom: 0; left: 0; width: var(--grab); height: var(--grab); cursor: sw-resize; }
+.resize-se { bottom: 0; right: 0; width: var(--grab); height: var(--grab); cursor: se-resize; }
+.resize-handle { --grab: calc(var(--frame-margin, 0px) + var(--resize-hit)); }
+/* Corners must win over the edges they overlap. */
+.resize-nw, .resize-ne, .resize-sw, .resize-se { z-index: 11; }
