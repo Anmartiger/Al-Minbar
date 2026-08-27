@@ -1,3 +1,6 @@
+pub mod cities;
+pub mod prayer;
+
 use serde::Serialize;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 
@@ -41,13 +44,59 @@ fn window_chrome() -> WindowChrome {
     detect_chrome()
 }
 
+/// Yesterday, today and tomorrow, in the location's own timezone (§4.1, §7.1).
+#[tauri::command]
+fn prayer_window(
+    location: prayer::Location,
+    settings: prayer::Settings,
+) -> Result<Vec<prayer::DayTimes>, String> {
+    let today = prayer::today_in(&location)?;
+    prayer::window(today, &location, &settings)
+}
+
+/// §4.1 offline city search. No geolocation service is contacted.
+#[tauri::command]
+fn search_cities(query: String, limit: Option<usize>) -> Vec<cities::City> {
+    cities::search(&query, limit.unwrap_or(20).min(100))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Qibla {
+    /// Degrees clockwise from true north.
+    bearing: f64,
+    distance_km: f64,
+}
+
+/// §7.4. Bearing is from *true* north; the app never pretends to know which way
+/// the user is facing, because a laptop has no magnetometer.
+#[tauri::command]
+fn qibla(latitude: f64, longitude: f64) -> Qibla {
+    Qibla {
+        bearing: prayer::qibla_bearing(latitude, longitude),
+        distance_km: prayer::distance_to_makkah_km(latitude, longitude),
+    }
+}
+
+/// The fresh-install location, so the frontend never hard-codes it (§4.1).
+#[tauri::command]
+fn default_location() -> prayer::Location {
+    prayer::Location::default()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let chrome = detect_chrome();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![window_chrome])
+        .invoke_handler(tauri::generate_handler![
+            window_chrome,
+            prayer_window,
+            search_cities,
+            qibla,
+            default_location
+        ])
         .setup(move |app| {
             // §1: the product name lives once, in tauri.conf.json.
             let title = app.package_info().name.clone();
