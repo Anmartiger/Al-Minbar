@@ -1,0 +1,132 @@
+/* Design tokens - Claude.md §6.2 (scale), §6.3 (colour), §6.5 (motion).
+   No component may hard-code a hex value, a radius, or a duration. */
+
+:root {
+  /* ---- Radius §6.2 ---------------------------------------------------- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;   /* buttons */
+  --radius-lg: 20px;   /* cards */
+  --radius-xl: 28px;   /* the window itself */
+  --radius-full: 9999px; /* chips */
+
+  /* ---- Spacing §6.2 - 4px grid, no exceptions ------------------------- */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-5: 20px;  --space-6: 24px;  --space-7: 32px;  --space-8: 40px;
+  --space-9: 56px;  --space-10: 72px;
+
+  /* ---- Type §6.2 ------------------------------------------------------ */
+  --font-latin: 'Inter', system-ui, sans-serif;
+  --font-arabic: 'Amiri', serif;         /* Arabic UI chrome §5.2 */
+  --font-quran: 'Amiri Quran', serif;    /* mushaf/verse text only §5.2 */
+
+  --text-display: 34px;  --weight-display: 700;  --track-display: -0.01em;
+  --text-title1: 28px;   --weight-title1: 700;   --track-title1: -0.01em;
+  --text-title2: 22px;   --weight-title2: 600;
+  --text-headline: 17px; --weight-headline: 600;
+  --text-body: 15px;     --weight-body: 400;
+  --text-callout: 14px;  --weight-callout: 400;
+  --text-caption: 12px;  --weight-caption: 500;
+  --text-micro: 11px;    --weight-micro: 500;
+
+  --lh-tight: 1.2;
+  --lh-body: 1.5;
+  /* §5.3: Quran text needs 2.0-2.4. This is a clipping bound, not a preference -
+     Amiri Quran's own line box is 2.449em (DESIGN_NOTES.md §2.2). Never go below. */
+  --lh-quran-min: 2.0;
+  --lh-quran: 2.2;
+  --lh-quran-max: 2.4;
+  --lh-arabic-ui: 1.8;  /* Amiri's natural box is 1.758em */
+
+  /* ---- Colour §6.3 - light is warm and paper-like, not clinical white -- */
+  --bg: #F7F6F3;
+  --surface: #FFFFFF;
+  --surface-2: #FBFAF8;
+  --text: #1C1B19;
+  --text-2: #6B6862;
+  --separator: rgba(0, 0, 0, 0.07);
+  --hairline: rgba(0, 0, 0, 0.06);
+  --top-highlight: transparent;
+  --accent-fg: #FFFFFF;
+
+  /* Accent palette §6.3 - six choices, light-theme shades.
+     Verified >=4.5:1 against bg/surface/surface-2 by scripts/check-contrast.mjs. */
+  --accent-green-teal: #0F6F62;
+  --accent-indigo: #5B52C9;
+  --accent-plum: #A62BB2;
+  --accent-clay: #A64A24;
+  --accent-gold: #835D1E;
+  --accent-slate: #1F66AC;
+
+  /* ---- Shadow §6.2 ---------------------------------------------------- */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.05);
+  /* Frameless Wayland windows get no server-side shadow (§6.7) - we draw our own
+     into the transparent margin. */
+  --shadow-window: 0 18px 50px rgba(0,0,0,.22), 0 4px 14px rgba(0,0,0,.14);
+
+  /* ---- Motion §6.5 ---------------------------------------------------- */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-micro: 150ms;
+  --duration-view: 300ms;
+  --duration-sheet: 400ms;
+  --press-scale: 0.97;
+
+  /* ---- Window chrome §6.7 --------------------------------------------- */
+  --titlebar-height: 44px;
+  --window-margin: 24px;  /* transparent padding the drop shadow lives in */
+  --resize-hit: 8px;
+}
+
+[data-theme="dark"] {
+  /* Deep neutral charcoal - not pure black, not blue-tinted (§6.3). */
+  --bg: #131312;
+  --surface: #1C1C1B;
+  --surface-2: #242423;
+  --text: #F2F1EE;
+  --text-2: #9C9A94;
+  --separator: rgba(255, 255, 255, 0.08);
+  --hairline: rgba(255, 255, 255, 0.08);
+  /* §6.2: in dark mode shadows shrink and a 1px top highlight replaces them
+     as the depth cue. */
+  --top-highlight: rgba(255, 255, 255, 0.06);
+  --accent-fg: #131312;
+
+  --accent-green-teal: #3AA294;
+  --accent-indigo: #8F88DD;
+  --accent-plum: #D072D9;
+  --accent-clay: #D67C51;
+  --accent-gold: #B98D3D;
+  --accent-slate: #5A97D2;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.20);
+  --shadow-md: 0 2px 6px rgba(0,0,0,.28);
+  --shadow-lg: 0 6px 18px rgba(0,0,0,.36);
+  --shadow-window: 0 18px 50px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.40);
+}
+
+/* Accent selection - one alias, six sources. */
+:root,
+[data-accent="green-teal"] { --accent: var(--accent-green-teal); }
+[data-accent="indigo"]     { --accent: var(--accent-indigo); }
+[data-accent="plum"]       { --accent: var(--accent-plum); }
+[data-accent="clay"]       { --accent: var(--accent-clay); }
+[data-accent="gold"]       { --accent: var(--accent-gold); }
+[data-accent="slate"]      { --accent: var(--accent-slate); }
+
+/* §6.5: honour prefers-reduced-motion - all transforms collapse to opacity fades.
+   A correctness requirement, not a nicety. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-micro: 0ms;
+    --duration-view: 0ms;
+    --duration-sheet: 0ms;
+    --press-scale: 1;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
