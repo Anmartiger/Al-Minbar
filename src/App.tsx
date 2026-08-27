@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react';
 import { getName } from '@tauri-apps/api/app';
-import { isTauri } from './lib/tauri';
 import { WindowFrame, useWindowChrome } from './components/WindowFrame';
+import { isTauri } from './lib/tauri';
 import {
-  ACCENTS, applyAppearance, loadAppearance, resolveTheme, saveAppearance,
-  watchSystemTheme, type Accent, type ThemeChoice,
+  applyAppearance, loadAppearance, saveAppearance, watchSystemTheme,
 } from './design/theme';
-import { BUNDLED_FAMILIES } from './design/fonts.generated';
+import Home from './screens/Home';
 import Gallery from './dev/Gallery';
-import './App.css';
-
-const THEMES: ThemeChoice[] = ['light', 'dark', 'system'];
 
 /** §11 Phase 1 asks for a /dev/components gallery route. No router in the stack
  *  (§3), and one dev route does not justify adding one - the hash form also works
- *  in a packaged build where deep paths would not resolve. */
+ *  in a packaged build where a deep path would not resolve. */
 const GALLERY_HASH = '#/dev/components';
 const isGalleryRoute = () =>
   location.pathname === '/dev/components' || location.hash === GALLERY_HASH;
@@ -25,9 +21,20 @@ function useHashRoute(): boolean {
     const sync = () => setGallery(isGalleryRoute());
     window.addEventListener('hashchange', sync);
     window.addEventListener('popstate', sync);
+    // A frameless window has no address bar, so the gallery needs a way in that
+    // does not put a developer link on a product screen.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        location.hash = isGalleryRoute() ? '' : GALLERY_HASH;
+        sync();
+      }
+    };
+    window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('hashchange', sync);
       window.removeEventListener('popstate', sync);
+      window.removeEventListener('keydown', onKey);
     };
   }, []);
   return gallery;
@@ -36,13 +43,11 @@ function useHashRoute(): boolean {
 export default function App() {
   const chrome = useWindowChrome();
   const gallery = useHashRoute();
-  const [{ theme, accent }, setAppearance] = useState(loadAppearance);
+  const [{ theme, accent }] = useState(loadAppearance);
   // §1: the product name lives once, in tauri.conf.json - never hard-coded here.
   const [name, setName] = useState('');
 
   useEffect(() => {
-    // §1: the name lives in tauri.conf.json. Outside Tauri there is no backend to
-    // ask, so the header is empty rather than hard-coding a second copy of it.
     if (!isTauri()) return;
     getName().then(n => { setName(n); document.title = n; }).catch(() => {});
   }, []);
@@ -56,86 +61,13 @@ export default function App() {
 
   if (!chrome) return null;
 
-  if (gallery) {
-    return <WindowFrame chrome={chrome} title={name}><Gallery /></WindowFrame>;
-  }
+  // §5.3: "Default to Arabic-Indic in Arabic UI, Western in English UI." The
+  // user-facing toggle is a Settings row and arrives with §7.6 in Phase 6.
+  const arabicIndic = document.documentElement.lang.startsWith('ar');
 
   return (
     <WindowFrame chrome={chrome} title={name}>
-      <div className="phase0" dir="ltr">
-        <h1>{name}</h1>
-        <p className="sub">
-          Phase 1 — design system.{' '}
-          <a href={GALLERY_HASH} className="gallery-link">Open the component gallery →</a>
-        </p>
-
-        <section className="panel">
-          <h2>Appearance</h2>
-          <div className="row">
-            <span className="k">Theme</span>
-            <div className="segmented">
-              {THEMES.map(t => (
-                <button key={t} aria-pressed={theme === t}
-                  onClick={() => setAppearance(a => ({ ...a, theme: t }))}>{t}</button>
-              ))}
-            </div>
-          </div>
-          <div className="row">
-            <span className="k">Accent</span>
-            <div className="swatches">
-              {ACCENTS.map(a => (
-                <button key={a} className="swatch" aria-label={a} aria-pressed={accent === a}
-                  style={{ background: `var(--accent-${a})` }}
-                  onClick={() => setAppearance(s => ({ ...s, accent: a as Accent }))} />
-              ))}
-            </div>
-          </div>
-          <div className="row">
-            <span className="k">Resolved</span>
-            <span className="v">{resolveTheme(theme)}</span>
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>Window chrome (§6.7)</h2>
-          <div className="row"><span className="k">Session type</span><span className="v">{chrome.sessionType}</span></div>
-          <div className="row"><span className="k">Transparent</span><span className="v">{String(chrome.transparent)}</span></div>
-          <div className="row"><span className="k">Corners</span><span className="v">{chrome.transparent ? 'rounded (radius xl)' : 'square — transparency unreliable'}</span></div>
-          <div className="row"><span className="k">Shadow margin</span><span className="v">{chrome.shadowMargin}px</span></div>
-        </section>
-
-        <section className="panel">
-          <h2>Type ramp (§6.2) — Inter</h2>
-          <div className="ramp">
-            <div className="d">Display 34/700</div>
-            <div className="t1">Title1 28/700</div>
-            <div className="t2">Title2 22/600</div>
-            <div className="hl">Headline 17/600</div>
-            <div className="bd">Body 15/400</div>
-            <div className="cp">Caption 12/500 · tabular 0123456789</div>
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>Bundled fonts (§5.1) — read from assets/fonts/ at build time</h2>
-          {BUNDLED_FAMILIES.map(f => (
-            <div className="row" key={f.name}>
-              <span className="k">{f.name}</span>
-              <span className="v">{f.weights.join(' · ')}{f.arabic ? '  · Arabic' : ''}</span>
-            </div>
-          ))}
-          <p className="quran specimen-quran" lang="ar" dir="rtl">
-            بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-          </p>
-          <p className="arabic specimen-ar" lang="ar" dir="rtl">
-            الفجر · الشروق · الظهر · العصر · المغرب · العشاء
-          </p>
-          <p className="note">
-            Quran line above is Amiri Quran at line-height {'{'}--lh-quran{'}'} = 2.2. Below 2.0 the
-            tashkeel clips (DESIGN_NOTES.md §2.2). Prayer names are Amiri.
-          </p>
-        </section>
-      </div>
+      {gallery ? <Gallery /> : <Home arabicIndic={arabicIndic} />}
     </WindowFrame>
   );
 }

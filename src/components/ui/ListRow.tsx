@@ -15,6 +15,7 @@ export function List({ className = '', children }: { className?: string; childre
  */
 export function ListRow({
   title, subtitle, leading, trailing, tinted, disabled, onClick, separatorInset,
+  className = '',
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
@@ -25,10 +26,11 @@ export function ListRow({
   onClick?: () => void;
   /** Overrides where the separator starts. Defaults to aligning with the title. */
   separatorInset?: string;
+  className?: string;
 }) {
   const interactive = Boolean(onClick) && !disabled;
   const inset = separatorInset ?? (leading ? 'calc(var(--space-4) + 24px + var(--space-3))' : 'var(--space-4)');
-  const cls = `listrow ${interactive ? 'listrow-interactive' : ''} ${tinted ? 'listrow-tinted' : ''}`
+  const cls = `listrow ${interactive ? 'listrow-interactive' : ''} ${tinted ? 'listrow-tinted' : ''} ${className}`
     .replace(/\s+/g, ' ').trim();
   const inner = (
     <>

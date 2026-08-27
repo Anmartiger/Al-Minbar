@@ -346,3 +346,81 @@ not resolved values of animatable properties.** Motion is checked in the real wi
 Static verification that does hold there: rule matching, computed layout, focus rings
 (`2px solid var(--accent)` at `2px` offset), disabled states (0.4 opacity across all
 controls), separator geometry, RTL mirroring, and absence of horizontal overflow.
+
+---
+
+## 6. Prayer-engine decisions taken in Phase 2
+
+### 6.1 §4.1's two requirements contradict each other
+
+§4.1 says to calculate with the **`salah`** crate — a port of Batoul Apps' **Adhan** —
+and, in the same section, that computed times must match **Aladhan** to within one
+minute. Aladhan is built on PrayTimes. The two algorithms genuinely differ:
+
+| Prayer | Divergence | Cause |
+|---|---|---|
+| **Asr** | 2–3 min, sign follows the season | Adhan takes solar declination at transit for the shadow-angle solve; PrayTimes iterates it at the Asr time itself |
+| **Isha** above ~48° | ~14 min | when the sun never reaches the Isha angle the middle-of-night clamp engages, and the two halve a differently-defined "night" |
+
+`salah`'s output was checked against the `adhan` reference implementation on every
+divergent case and agreed **exactly**, so these are algorithm differences, not defects.
+
+**Decision (2026-08-28): keep Adhan, name the exemptions.** The committed Aladhan
+fixture stays — it is real published data. `tests/prayer_fixtures.rs` holds Fajr,
+Sunrise, Dhuhr and Maghrib to a strict ≤1 minute (128 comparisons, all passing) and
+carries exactly two named, justified exemptions. A guard asserts that at least half of
+all comparisons remain on the strict bar, so the exemptions cannot quietly grow.
+
+Today's Ajloun timetable was spot-checked against Aladhan live: all six within a minute.
+
+### 6.2 The `salah` crate is vendored for a one-word patch, and two real bugs
+
+`src-tauri/vendor/salah/` (MIT, upstream `insha/salah` 0.7.6). Three changes, all
+documented in `vendor/salah/PATCH.md`:
+
+1. **`mod models` → `pub mod models`.** `Parameters.high_latitude_rule` is a public
+   field whose type `HighLatitudeRule` is re-exported by neither the crate root nor
+   the prelude — the field is public, its type unnameable. Without this the §4.1
+   high-latitude setting cannot be set at all. `master` has the same problem.
+2. **Maghrib honours `maghrib_angle`.** Upstream stores the field, and
+   `Method::Tehran` even sets it to 4.5°, but nothing ever reads it — Maghrib was
+   always plain sunset. That makes upstream's **Tehran wrong**, and it silently
+   defeated Ja'fari, both of which §4.1 requires.
+3. **High latitude no longer panics.** `time_for_solar_angle` unwrapped a `None`
+   whenever the sun does not reach the requested angle — so **London in July crashed
+   the calculation outright**. It now falls back out-of-range in the direction the
+   caller clamps, which lets the existing night-portion clamp take over. That is what
+   the reference Adhan implementations do.
+
+### 6.3 Two §4.1 items that could not be delivered as written
+
+- **Ja'fari (Shia Ithna-Ashari)** has no variant in `salah`. It is built from explicit
+  angles instead — Fajr 16°, Maghrib 4°, Isha 14°, the Leva Institute (Qum) set that
+  Aladhan publishes as its method 0. This only works because of patch 2 above.
+- **The high-latitude rule "None"** does not exist upstream in any form; `salah`
+  always applies one of its three rules. Three of §4.1's four are offered. It is
+  omitted rather than aliased to another, which would misreport what the app does.
+  The practical cost is small: the clamp only binds above roughly 48° latitude, so at
+  Ajloun all four settings would produce identical times.
+
+### 6.4 The Hijri date is tabular, and will differ from Aladhan by a day
+
+§7.5 calls it "the tabular calendar" and asks for a ±1 day adjustment "because local
+moon-sighting differs from the tabular calendar", so an arithmetic calendar is what
+the spec expects. Aladhan defaults to Umm al-Qura.
+
+Today they differ: the engine gives **14 Rabi' al-Awwal 1448**, Aladhan **15**. That is
+the expected, documented behaviour rather than a bug, and precisely why the ±1 setting
+exists — but it does mean a fresh install can look "off by one" against the common
+reference until that setting lands in Phase 5/6. Worth a decision then about whether
+the shipped default should be tabular or Umm al-Qura.
+
+### 6.5 The city database keeps every city
+
+§4.1 budgets the GeoNames `cities5000` extract at under 2 MB. A population floor is the
+easy way there, but it fails exactly the user in a small town who most needs to find it.
+Size comes out of the encoding instead — timezones referenced by index rather than
+repeated 70,000 times, coordinates as base-36 fixed point, population dropped since row
+order already encodes the ranking. Result: **all 69,664 cities, 371 timezones, 5,333
+Arabic names, 1.95 MB.** The table is parsed on first search, not at startup, because
+§8.1 budgets background mode at under 60 MB resident.

@@ -7,9 +7,10 @@
     "fonts": "node scripts/generate-fonts.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "dev": "npm run fonts && vite",
-    "build": "npm run fonts && npm run check:contrast && tsc && vite build",
+    "build": "npm run fonts && npm run check:contrast && npm run check:logic && tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "check:logic": "node scripts/check-prayer-logic.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

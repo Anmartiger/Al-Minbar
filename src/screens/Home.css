@@ -1,0 +1,193 @@
+/* §7.1 — the screen the app opens to, and the one that must be gorgeous. */
+
+.home {
+  position: relative;
+  min-block-size: 100%;
+  padding: var(--space-6) var(--space-8) var(--space-8);
+  max-inline-size: 860px;
+  margin-inline: auto;
+}
+
+/* §7.1: "a very subtle vertical gradient that shifts with the time of day
+   (dawn → day → dusk → night), at low enough saturation that text contrast never
+   drops." It is painted as a low-alpha wash *over* --bg rather than replacing it,
+   so the text/background contrast the tokens guarantee cannot be undercut - the
+   most it can shift any channel is the alpha below. */
+.home-sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--sky-top) var(--sky-strength), transparent) 0%,
+    transparent 62%
+  );
+  transition: background var(--duration-view) var(--ease);
+}
+
+.home > *:not(.home-sky) { position: relative; z-index: 1; }
+
+/* ------------------------------- header -------------------------------- */
+
+.home-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-block-end: var(--space-7);
+}
+
+.home-hijri {
+  font-family: var(--font-arabic);
+  font-size: var(--text-title1);
+  font-weight: var(--weight-title2);
+  line-height: var(--lh-arabic-ui);
+  letter-spacing: normal;
+}
+.home-gregorian {
+  font-size: var(--text-caption);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  margin-block-start: 2px;
+}
+
+.home-place {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-callout);
+  cursor: default;
+  white-space: nowrap;
+  transition: background var(--duration-micro) var(--ease),
+              transform var(--duration-micro) var(--ease);
+}
+.home-place:hover { background: var(--surface-2); }
+.home-place:active { transform: scale(var(--press-scale)); }
+.home-place svg { color: var(--accent); flex: 0 0 auto; }
+
+/* -------------------------------- hero --------------------------------- */
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding-block: var(--space-7) var(--space-9);
+}
+
+.hero-ring { position: relative; display: grid; place-items: center; flex: 0 0 auto; }
+.hero-ring-inner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.hero-name {
+  font-family: var(--font-quran);
+  font-size: 40px;
+  line-height: 1.35;
+  letter-spacing: normal;
+  color: var(--accent);
+}
+.hero-at {
+  font-size: var(--text-caption);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-side { display: flex; flex-direction: column; gap: var(--space-1); }
+.hero-label {
+  font-size: var(--text-micro);
+  font-weight: var(--weight-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+.hero-countdown {
+  font-size: 46px;
+  font-weight: var(--weight-display);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  /* The seconds column changes every tick; a fixed advance stops the whole
+     number jittering sideways. */
+  font-feature-settings: "tnum" 1;
+}
+.hero-countdown.arabic-indic { font-family: var(--font-arabic); letter-spacing: normal; }
+.hero-time { font-size: var(--text-headline); color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------ prayer list ---------------------------- */
+
+.home-list { margin-block-end: var(--space-6); }
+
+.prayer-row-name {
+  font-family: var(--font-arabic);
+  font-size: var(--text-title2);
+  line-height: var(--lh-arabic-ui);
+  letter-spacing: normal;
+}
+.prayer-row-latin {
+  font-size: var(--text-caption);
+  color: var(--text-2);
+  letter-spacing: 0.02em;
+}
+.prayer-row-time {
+  font-size: var(--text-headline);
+  font-variant-numeric: tabular-nums;
+  min-inline-size: 6ch;
+  text-align: end;
+}
+/* §7.1: passed rows dim. §6.3: a missed prayer is never scolded in red. */
+.prayer-row-passed .prayer-row-name,
+.prayer-row-passed .prayer-row-time { color: var(--text-2); }
+
+/* ------------------------------- footer -------------------------------- */
+
+.home-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding-block-start: var(--space-2);
+}
+.home-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+  transition: transform var(--duration-micro) var(--ease),
+              background var(--duration-micro) var(--ease);
+}
+.home-chip[data-interactive='true']:hover { background: var(--surface-2); color: var(--text); }
+.home-chip[data-interactive='true']:active { transform: scale(var(--press-scale)); }
+.home-chip svg { color: var(--accent); }
+
+/* ------------------------------ location sheet ------------------------- */
+
+.city-hit { display: flex; align-items: baseline; gap: var(--space-2); }
+.city-hit-ar { font-family: var(--font-arabic); letter-spacing: normal; color: var(--text-2); }
+
+.home-error {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--text-callout);
+}
