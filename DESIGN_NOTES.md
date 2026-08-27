@@ -273,3 +273,76 @@ padding "accounted for in the window size". Read as *content* 900×640, so the O
 948×688 on Wayland and 900×640 on X11 where there is no margin.
 
 ---
+
+---
+
+## 5. Component library decisions taken in Phase 1
+
+All seventeen §6.6 components live in `src/components/ui/`, grouped by concern rather
+than one file each, with a single `ui.css`. The gallery is at `#/dev/components`
+(also `/dev/components` in dev), reachable from a link on the home screen because a
+frameless window has no address bar.
+
+### 5.1 What is hand-built and what is delegated to the platform
+
+§3 forbids a component kit, and §6.6 says hand-build. That governs the *look*, not the
+mechanics — so where a native element already carries the semantics, it wears the custom
+styling rather than being re-implemented:
+
+| Component | Built on | Why |
+|---|---|---|
+| `Slider` | native `<input type="range">` | keyboard stepping, ARIA value reporting and drag come free; only the track and thumb are styled |
+| `Switch` | `<button role="switch">` | correct semantics, and `aria-checked` doubles as the CSS state hook |
+| `SegmentedControl` | `radiogroup`/`radio` | arrow-key movement is what a keyboard user expects; the keys follow *logical* direction so they stay correct under RTL |
+| `Tooltip` | `role="tooltip"` on hover **and** focus | keyboard users get tooltips too |
+| everything else | hand-rolled | no native equivalent worth wearing |
+
+### 5.2 The switch knob is a transition, not a spring
+
+§6.5 reserves Framer springs for "anything that a finger would grab — sheets, the mushaf
+page turn, drawers" and puts everything else on a 150ms micro-interaction duration. A
+switch knob is in the second group, so its travel is a plain CSS transition and Framer is
+not involved at all — no JS animation for a 20px slide.
+
+It animates `transform: translateX()` rather than the logical `inset-inline-start`. The
+logical property would make RTL free, but it animates layout instead of compositing, so
+the transform plus one explicit `[dir="rtl"]` rule is the better trade. `translateX`
+rather than the newer `translate` property, to stay safe on the WebKitGTK in 22.04.
+
+### 5.3 ListRow separators
+
+§6.6 flags these as "very visible and usually gotten wrong". The rule:
+
+- is drawn by the row *below* the first, so the top of the list has no stray line;
+- starts at `--row-inset`, not the container edge, and runs to the trailing edge;
+- when a row has a leading icon, `--row-inset` rises to `space-4 + 24 + space-3` so the
+  rule aligns to the **text**, not the icon — that is the part usually missed.
+
+Measured in both directions: 16px inset on plain rows, 52px on icon rows, trailing inset
+0, and the whole thing mirrors correctly under RTL.
+
+### 5.4 The gallery has deliberate override controls
+
+§6.4 says of the `backdrop-filter` fallback: "Test this path deliberately; do not assume
+it works." So the gallery toolbar carries **Backdrop: Auto / Force on / Force off** and a
+**Direction: LTR / RTL** toggle, rather than leaving both to chance on another machine.
+
+Forcing the opaque path was measured across 39 elements: **zero layout drift**. Only the
+translucency changes — `blur(20px) saturate(1.8)` over a translucent fill becomes an
+opaque solid at the same lightness, exactly as §6.4 requires.
+
+### 5.5 What cannot be verified in a browser tab
+
+Anything that needs frames to advance. The dev browser pane runs hidden
+(`document.hidden === true`, zero `requestAnimationFrame` callbacks in 500ms), so CSS
+transitions and Framer springs never progress and any transitioning property reads frozen
+at its previous value.
+
+This produced two false alarms during Phase 1 — a "stuck" CSS transition and a Framer
+`transform: none` — both artifacts of the paused frame loop, neither a real defect. The
+lesson for later phases: **in that environment, verify CSS rules and selector matching,
+not resolved values of animatable properties.** Motion is checked in the real window.
+
+Static verification that does hold there: rule matching, computed layout, focus rings
+(`2px solid var(--accent)` at `2px` offset), disabled states (0.4 opacity across all
+controls), separator geometry, RTL mirroring, and absence of horizontal overflow.

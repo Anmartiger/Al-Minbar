@@ -7,12 +7,35 @@ import {
   watchSystemTheme, type Accent, type ThemeChoice,
 } from './design/theme';
 import { BUNDLED_FAMILIES } from './design/fonts.generated';
+import Gallery from './dev/Gallery';
 import './App.css';
 
 const THEMES: ThemeChoice[] = ['light', 'dark', 'system'];
 
+/** §11 Phase 1 asks for a /dev/components gallery route. No router in the stack
+ *  (§3), and one dev route does not justify adding one - the hash form also works
+ *  in a packaged build where deep paths would not resolve. */
+const GALLERY_HASH = '#/dev/components';
+const isGalleryRoute = () =>
+  location.pathname === '/dev/components' || location.hash === GALLERY_HASH;
+
+function useHashRoute(): boolean {
+  const [gallery, setGallery] = useState(isGalleryRoute);
+  useEffect(() => {
+    const sync = () => setGallery(isGalleryRoute());
+    window.addEventListener('hashchange', sync);
+    window.addEventListener('popstate', sync);
+    return () => {
+      window.removeEventListener('hashchange', sync);
+      window.removeEventListener('popstate', sync);
+    };
+  }, []);
+  return gallery;
+}
+
 export default function App() {
   const chrome = useWindowChrome();
+  const gallery = useHashRoute();
   const [{ theme, accent }, setAppearance] = useState(loadAppearance);
   // §1: the product name lives once, in tauri.conf.json - never hard-coded here.
   const [name, setName] = useState('');
@@ -33,11 +56,18 @@ export default function App() {
 
   if (!chrome) return null;
 
+  if (gallery) {
+    return <WindowFrame chrome={chrome} title={name}><Gallery /></WindowFrame>;
+  }
+
   return (
     <WindowFrame chrome={chrome} title={name}>
       <div className="phase0" dir="ltr">
         <h1>{name}</h1>
-        <p className="sub">Phase 0 — foundation. Tokens, theming, window chrome, fonts.</p>
+        <p className="sub">
+          Phase 1 — design system.{' '}
+          <a href={GALLERY_HASH} className="gallery-link">Open the component gallery →</a>
+        </p>
 
         <section className="panel">
           <h2>Appearance</h2>

@@ -1,0 +1,66 @@
+.gallery { padding: 0 0 var(--space-10); }
+
+.gallery-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  padding: var(--space-4) var(--space-8);
+  border-block-end: 1px solid var(--hairline);
+}
+.gallery-bar h1 { font-size: var(--text-headline); font-weight: var(--weight-headline); margin: 0; }
+.gallery-bar .spacer { flex: 1; }
+.gallery-bar-group { display: flex; align-items: center; gap: var(--space-2); }
+.gallery-bar-label { font-size: var(--text-micro); color: var(--text-2);
+                     text-transform: uppercase; letter-spacing: 0.06em; }
+
+.gallery-swatches { display: flex; gap: var(--space-1); }
+.gallery-swatch { inline-size: 22px; block-size: 22px; border-radius: var(--radius-full);
+                  border: 1px solid var(--hairline); padding: 0; cursor: default;
+                  transition: transform var(--duration-micro) var(--ease); }
+.gallery-swatch:active { transform: scale(var(--press-scale)); }
+.gallery-swatch[aria-pressed='true'] { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.gallery-body { padding: var(--space-7) var(--space-8) 0; max-inline-size: 1000px; margin-inline: auto; }
+
+.section { margin-block-end: var(--space-9); }
+.section > h2 {
+  font-size: var(--text-title2);
+  font-weight: var(--weight-title2);
+  margin: 0 0 var(--space-1);
+}
+.section > .section-note {
+  font-size: var(--text-caption);
+  color: var(--text-2);
+  margin: 0 0 var(--space-4);
+  max-inline-size: 70ch;
+}
+
+.specimens { display: flex; flex-wrap: wrap; gap: var(--space-5); align-items: flex-start; }
+.specimen { display: flex; flex-direction: column; gap: var(--space-2); }
+.specimen-label { font-size: var(--text-micro); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.specimen-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+
+.stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); }
+
+/* A patterned bed so Material translucency is actually visible. */
+.material-bed {
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background-image:
+    linear-gradient(135deg, var(--accent) 0%, transparent 55%),
+    repeating-linear-gradient(45deg, var(--text-2) 0 8px, transparent 8px 16px);
+  background-color: var(--surface-2);
+  border: 1px solid var(--hairline);
+}
+.material-chip {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  font-size: var(--text-caption);
+  text-align: center;
+}
