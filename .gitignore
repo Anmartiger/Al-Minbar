@@ -1,0 +1,14 @@
+# Fonts with no redistribution grant — see DESIGN_NOTES.md §2.5.
+# Kept on disk, never committed, never bundled.
+assets/fonts-unlicensed/
+
+# Local agent tooling, not project content. Un-ignore if you want it tracked.
+.agents/
+.claude/
+skills-lock.json
+frontend.md
+
+node_modules/
+dist/
+src-tauri/target/
+*.local
