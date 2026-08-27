@@ -1,0 +1,482 @@
+/* §6.6 component library. Hand-built - no component kit, because the look is the point.
+   Every value here is a token; nothing hard-codes a hex, a radius or a duration. */
+
+/* ============================ Material §6.4 ============================ */
+
+.material { position: relative; }
+.material-thin    { background: var(--material-thin-solid); }
+.material-regular { background: var(--material-regular-solid); }
+.material-thick   { background: var(--material-thick-solid); }
+
+/* Translucency only where WebKitGTK actually supports it. The opaque rules above
+   stay as the base, so the layout is pixel-identical either way. */
+[data-backdrop="yes"] .material-thin {
+  background: var(--material-thin-bg);
+  backdrop-filter: blur(var(--material-blur-thin)) saturate(var(--material-saturate));
+  -webkit-backdrop-filter: blur(var(--material-blur-thin)) saturate(var(--material-saturate));
+}
+[data-backdrop="yes"] .material-regular {
+  background: var(--material-regular-bg);
+  backdrop-filter: blur(var(--material-blur-regular)) saturate(var(--material-saturate));
+  -webkit-backdrop-filter: blur(var(--material-blur-regular)) saturate(var(--material-saturate));
+}
+[data-backdrop="yes"] .material-thick {
+  background: var(--material-thick-bg);
+  backdrop-filter: blur(var(--material-blur-thick)) saturate(var(--material-saturate));
+  -webkit-backdrop-filter: blur(var(--material-blur-thick)) saturate(var(--material-saturate));
+}
+
+/* ============================== Card =================================== */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);      /* §6.2: cards use lg */
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+.card-padded { padding: var(--space-5) var(--space-6); }
+.card-raised { box-shadow: var(--shadow-md); }
+/* §6.2: in dark mode a 1px top highlight replaces shadow as the depth cue. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 1px;
+  height: 1px;
+  border-radius: inherit;
+  background: var(--top-highlight);
+  pointer-events: none;
+}
+
+/* ============================= Button ================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);      /* §6.2: buttons use md */
+  font-family: inherit;
+  font-size: var(--text-callout);
+  font-weight: var(--weight-headline);
+  line-height: 1;
+  padding: 0 var(--space-4);
+  height: 36px;
+  cursor: default;
+  white-space: nowrap;
+  transition: background var(--duration-micro) var(--ease),
+              box-shadow var(--duration-micro) var(--ease),
+              transform var(--duration-micro) var(--ease),
+              opacity var(--duration-micro) var(--ease);
+}
+/* §6.5: press states scale to 0.97 and lift shadow - that tactile squish is
+   most of the feel. */
+.btn:active:not(:disabled) { transform: scale(var(--press-scale)); }
+.btn:disabled { opacity: 0.4; }
+
+.btn-sm { height: 28px; padding: 0 var(--space-3); font-size: var(--text-caption); }
+.btn-lg { height: 44px; padding: 0 var(--space-5); font-size: var(--text-headline); }
+
+.btn-filled { background: var(--accent); color: var(--accent-fg); box-shadow: var(--shadow-sm); }
+.btn-filled:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, var(--text));
+  box-shadow: var(--shadow-md);
+}
+.btn-tinted { background: var(--tint); color: var(--accent); }
+.btn-tinted:hover:not(:disabled) { background: var(--tint-strong); }
+.btn-plain { background: transparent; color: var(--accent); }
+.btn-plain:hover:not(:disabled) { background: var(--fill-quiet); }
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);    /* §6.2: chips use full */
+  background: transparent;
+  color: var(--text-2);
+  cursor: default;
+  transition: background var(--duration-micro) var(--ease),
+              color var(--duration-micro) var(--ease),
+              transform var(--duration-micro) var(--ease);
+}
+.icon-btn:hover:not(:disabled) { background: var(--fill-quiet); color: var(--text); }
+.icon-btn:active:not(:disabled) { transform: scale(var(--press-scale)); }
+.icon-btn:disabled { opacity: 0.4; }
+.icon-btn-active { background: var(--tint); color: var(--accent); }
+
+/* ========================= SegmentedControl ============================ */
+
+.segctl {
+  display: inline-flex;
+  background: var(--fill-quieter);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+.segctl-option {
+  position: relative;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--text-callout);
+  font-weight: var(--weight-caption);
+  padding: var(--space-1) var(--space-4);
+  border-radius: calc(var(--radius-md) - 4px);
+  cursor: default;
+  white-space: nowrap;
+  transition: color var(--duration-micro) var(--ease);
+}
+.segctl-option:disabled { opacity: 0.4; }
+.segctl-option[aria-selected='true'] { color: var(--text); }
+/* The moving thumb is a sibling so it can spring between options (§6.5). */
+.segctl-thumb {
+  position: absolute;
+  inset-block: 3px;
+  border-radius: calc(var(--radius-md) - 4px);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  z-index: 0;
+}
+.segctl-label { position: relative; z-index: 1; }
+
+/* ============================== Switch ================================= */
+/* iOS-style track + knob. */
+
+.switch {
+  --switch-w: 50px;
+  --switch-h: 30px;
+  position: relative;
+  inline-size: var(--switch-w);
+  block-size: var(--switch-h);
+  border: 0;
+  padding: 0;
+  border-radius: var(--radius-full);
+  background: var(--switch-off);
+  cursor: default;
+  flex: 0 0 auto;
+  transition: background var(--duration-micro) var(--ease);
+}
+.switch[aria-checked='true'] { background: var(--accent); }
+.switch:disabled { opacity: 0.4; }
+.switch-knob {
+  position: absolute;
+  inset-block-start: 3px;
+  inset-inline-start: 3px;
+  inline-size: calc(var(--switch-h) - 6px);
+  block-size: calc(var(--switch-h) - 6px);
+  border-radius: var(--radius-full);
+  background: var(--knob);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  /* §6.5 sorts a switch knob into the 150ms micro-interaction bucket, not the
+     "something a finger would grab" spring bucket, so this is a plain CSS
+     transition rather than a Framer spring - no JS animation for a 20px slide.
+     translateX rather than the newer `translate` property, to stay safe on the
+     WebKitGTK that ships with 22.04; the composited transform also costs less
+     than animating a layout property. The one RTL rule below is the price. */
+  transition: transform var(--duration-micro) var(--ease);
+}
+.switch[aria-checked='true'] .switch-knob {
+  transform: translateX(calc(var(--switch-w) - var(--switch-h)));
+}
+[dir='rtl'] .switch[aria-checked='true'] .switch-knob {
+  transform: translateX(calc(-1 * (var(--switch-w) - var(--switch-h))));
+}
+
+/* ============================== Slider ================================= */
+/* A native <input type="range"> under custom styling: the look is hand-built, but
+   keyboard stepping, ARIA and drag come from the platform rather than being
+   re-implemented. --pct carries the fill position. */
+
+.slider { display: flex; align-items: center; gap: var(--space-3); inline-size: 100%; }
+.slider input[type='range'] {
+  flex: 1;
+  min-inline-size: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  block-size: 18px;
+  margin: 0;
+  cursor: default;
+}
+.slider input[type='range']::-webkit-slider-runnable-track {
+  block-size: 4px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(to var(--slider-to, right),
+              var(--accent) var(--pct, 0%), var(--fill-quiet) var(--pct, 0%));
+}
+.slider input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  inline-size: 18px;
+  block-size: 18px;
+  margin-block-start: -7px;
+  border-radius: var(--radius-full);
+  background: var(--knob);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  transition: transform var(--duration-micro) var(--ease);
+}
+.slider input[type='range']:active::-webkit-slider-thumb { transform: scale(1.15); }
+.slider input[type='range']:disabled { opacity: 0.4; }
+.slider-value {
+  font-size: var(--text-caption);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  min-inline-size: 4ch;
+  text-align: end;
+}
+
+/* ============================= ListRow ================================= */
+
+.list { background: var(--surface); border: 1px solid var(--hairline);
+        border-radius: var(--radius-lg); overflow: hidden; }
+
+.listrow {
+  --row-inset: var(--space-4);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-3) var(--space-4);
+  min-block-size: 52px;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: default;
+  transition: background var(--duration-micro) var(--ease);
+}
+.listrow-interactive:hover { background: var(--fill-quieter); }
+.listrow-interactive:active { background: var(--fill-quiet); }
+.listrow[aria-disabled='true'] { opacity: 0.4; }
+
+/* §6.6: inset separators that stop before the row's inline padding. The rule is
+   drawn on the row below the first, starts at the content inset rather than the
+   container edge, and runs to the trailing edge - the iOS convention. When a row
+   has a leading icon, --row-inset is raised so the rule aligns to the text. */
+.listrow + .listrow::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: var(--row-inset);
+  inset-inline-end: 0;
+  block-size: 1px;
+  background: var(--separator);
+}
+.listrow-leading { flex: 0 0 auto; display: grid; place-items: center; color: var(--text-2); }
+.listrow-body { flex: 1; min-inline-size: 0; }
+.listrow-title { font-size: var(--text-body); }
+.listrow-subtitle { font-size: var(--text-caption); color: var(--text-2); margin-block-start: 2px; }
+.listrow-trailing { flex: 0 0 auto; display: flex; align-items: center; gap: var(--space-2);
+                    color: var(--text-2); font-size: var(--text-callout); }
+.listrow-tinted { background: var(--tint); }
+.listrow-tinted .listrow-title { color: var(--accent); font-weight: var(--weight-headline); }
+
+/* ============================== Badge ================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-micro);
+  font-weight: var(--weight-micro);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.badge-neutral { background: var(--fill-quiet); color: var(--text-2); }
+.badge-accent  { background: var(--tint); color: var(--accent); }
+.badge-solid   { background: var(--accent); color: var(--accent-fg); }
+/* §6.3: missed prayers are never red - this app does not scold the user. A quiet
+   outline instead. */
+.badge-outline { background: transparent; color: var(--text-2); box-shadow: inset 0 0 0 1px var(--separator); }
+
+/* ============================ SearchField ============================== */
+
+.searchfield {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  block-size: 36px;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--fill-quieter);
+  border: 1px solid var(--hairline);
+  color: var(--text-2);
+  transition: border-color var(--duration-micro) var(--ease),
+              background var(--duration-micro) var(--ease);
+}
+.searchfield:focus-within { border-color: var(--accent); background: var(--surface); }
+.searchfield input {
+  flex: 1;
+  min-inline-size: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--text-callout);
+  color: var(--text);
+  outline: none;
+}
+.searchfield input::placeholder { color: var(--text-2); }
+.searchfield[aria-disabled='true'] { opacity: 0.4; }
+
+/* ============================ ProgressRing ============================= */
+
+.ring { display: inline-grid; place-items: center; position: relative; }
+.ring svg { display: block; transform: rotate(-90deg); }
+.ring-track { stroke: var(--fill-quiet); }
+.ring-fill { stroke: var(--accent); stroke-linecap: round;
+             transition: stroke-dashoffset var(--duration-view) var(--ease); }
+.ring-label { position: absolute; font-size: var(--text-caption);
+              font-variant-numeric: tabular-nums; color: var(--text-2); }
+
+/* ============================= Skeleton ================================ */
+/* §6.5: no spinners where a skeleton will do. */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--skeleton);
+  border-radius: var(--radius-sm);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--skeleton-sheen), transparent);
+  animation: skeleton-sheen 1.4s infinite;
+}
+@keyframes skeleton-sheen { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+
+/* ============================== Toast ================================== */
+
+.toast-layer {
+  position: fixed;
+  inset-block-end: var(--space-6);
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  pointer-events: none;
+  z-index: 60;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-inline-size: 420px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-callout);
+  pointer-events: auto;
+}
+.toast-icon { flex: 0 0 auto; color: var(--accent); display: grid; place-items: center; }
+
+/* ============================= Tooltip ================================= */
+
+.tooltip-anchor { position: relative; display: inline-flex; }
+.tooltip {
+  position: absolute;
+  inset-block-end: calc(100% + var(--space-2));
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--tooltip-bg);
+  color: var(--tooltip-fg);
+  font-size: var(--text-micro);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+  z-index: 50;
+}
+
+/* ============================= Popover ================================= */
+
+.popover {
+  position: absolute;
+  inset-block-start: calc(100% + var(--space-2));
+  inset-inline-start: 0;
+  min-inline-size: 220px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-lg);
+  z-index: 55;
+}
+
+/* ============================== Sheet ================================== */
+
+.sheet-scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 70; }
+.sheet {
+  position: fixed;
+  z-index: 71;
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+}
+.sheet-bottom {
+  inset-inline: 0;
+  inset-block-end: 0;
+  max-block-size: 78%;
+  border-start-start-radius: var(--radius-xl);
+  border-start-end-radius: var(--radius-xl);
+}
+.sheet-side {
+  inset-block: 0;
+  inset-inline-end: 0;
+  inline-size: min(420px, 88%);
+  border-start-start-radius: var(--radius-xl);
+  border-end-start-radius: var(--radius-xl);
+}
+/* §6.5: anything a finger would "grab" gets a spring, and a visible grab handle. */
+.sheet-grip {
+  inline-size: 36px;
+  block-size: 5px;
+  border-radius: var(--radius-full);
+  background: var(--separator);
+  margin: var(--space-3) auto var(--space-1);
+  flex: 0 0 auto;
+  cursor: grab;
+}
+.sheet-grip:active { cursor: grabbing; }
+.sheet-header { padding: var(--space-3) var(--space-6) 0; }
+.sheet-title { font-size: var(--text-title2); font-weight: var(--weight-title2); }
+.sheet-body { padding: var(--space-4) var(--space-6) var(--space-7); overflow: auto; }
+
+/* ============================ EmptyState =============================== */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-9) var(--space-6);
+  color: var(--text-2);
+}
+.empty-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 56px;
+  block-size: 56px;
+  border-radius: var(--radius-full);
+  background: var(--fill-quieter);
+  color: var(--text-2);
+}
+.empty-title { font-size: var(--text-headline); font-weight: var(--weight-headline); color: var(--text); }
+.empty-body { font-size: var(--text-callout); max-inline-size: 42ch; }

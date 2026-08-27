@@ -73,6 +73,34 @@
   --duration-sheet: 400ms;
   --press-scale: 0.97;
 
+
+  /* ---- Materials §6.4 ------------------------------------------------- */
+  /* Translucency where WebKitGTK supports backdrop-filter, an opaque surface at
+     the same apparent lightness where it does not. Layout is identical either way. */
+  --material-thin-bg: rgba(255, 255, 255, 0.60);
+  --material-regular-bg: rgba(255, 255, 255, 0.72);
+  --material-thick-bg: rgba(255, 255, 255, 0.85);
+  --material-thin-solid: #FCFCFA;
+  --material-regular-solid: #FDFDFB;
+  --material-thick-solid: #FEFEFD;
+  --material-blur-thin: 20px;
+  --material-blur-regular: 30px;
+  --material-blur-thick: 40px;
+  --material-saturate: 180%;
+
+  /* ---- Component surfaces --------------------------------------------- */
+  --fill-quiet: rgba(0, 0, 0, 0.05);      /* plain button hover, track fills */
+  --fill-quieter: rgba(0, 0, 0, 0.03);
+  --tint: color-mix(in srgb, var(--accent) 12%, transparent);
+  --tint-strong: color-mix(in srgb, var(--accent) 18%, transparent);
+  --skeleton: rgba(0, 0, 0, 0.06);
+  --skeleton-sheen: rgba(0, 0, 0, 0.02);
+  --scrim: rgba(0, 0, 0, 0.28);
+  --knob: #FFFFFF;
+  --switch-off: rgba(0, 0, 0, 0.16);
+  --tooltip-bg: #2B2A28;
+  --tooltip-fg: #F7F6F3;
+
   /* ---- Window chrome §6.7 --------------------------------------------- */
   --titlebar-height: 44px;
   --window-margin: 24px;  /* transparent padding the drop shadow lives in */
@@ -99,6 +127,24 @@
   --accent-clay: #D67C51;
   --accent-gold: #B98D3D;
   --accent-slate: #5A97D2;
+
+
+  --material-thin-bg: rgba(28, 28, 27, 0.60);
+  --material-regular-bg: rgba(28, 28, 27, 0.72);
+  --material-thick-bg: rgba(28, 28, 27, 0.85);
+  --material-thin-solid: #1A1A19;
+  --material-regular-solid: #1B1B1A;
+  --material-thick-solid: #1C1C1B;
+
+  --fill-quiet: rgba(255, 255, 255, 0.08);
+  --fill-quieter: rgba(255, 255, 255, 0.05);
+  --skeleton: rgba(255, 255, 255, 0.07);
+  --skeleton-sheen: rgba(255, 255, 255, 0.03);
+  --scrim: rgba(0, 0, 0, 0.5);
+  --knob: #FFFFFF;
+  --switch-off: rgba(255, 255, 255, 0.20);
+  --tooltip-bg: #EDECE8;
+  --tooltip-fg: #1C1B19;
 
   --shadow-sm: 0 1px 2px rgba(0,0,0,.20);
   --shadow-md: 0 2px 6px rgba(0,0,0,.28);
