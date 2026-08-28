@@ -3,7 +3,7 @@
 </div>
 
 
-# Al-Minabr · المنبر
+<h1 align="center"># Al-Minabr · المنبر</h1>
 
 **Prayer times, Quran, athkar, qibla and a Hijri calendar for the Linux desktop.**
 
