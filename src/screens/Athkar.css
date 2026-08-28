@@ -1,0 +1,134 @@
+/* §7.3 — athkar. Same page-derived language as the home screen: framed blocks for
+   bounded content, rules rather than shadows. */
+
+.athkar { padding: var(--space-7) var(--space-8) var(--space-9);
+          max-inline-size: 880px; margin-inline: auto; }
+
+.athkar-head { display: flex; align-items: center; gap: var(--space-4);
+               margin-block-end: var(--space-6); }
+.athkar-title { font-family: var(--font-arabic); font-size: 28px; line-height: 1.5;
+                letter-spacing: normal; margin: 0; }
+.athkar-session { font-size: var(--text-micro); text-transform: uppercase;
+                  letter-spacing: 0.14em; color: var(--text-2); }
+
+.athkar-section { font-size: var(--text-micro); font-weight: var(--weight-micro);
+                  text-transform: uppercase; letter-spacing: 0.16em; color: var(--text-2);
+                  margin: var(--space-6) 0 var(--space-3); }
+
+/* ------------------------------ the grid -------------------------------- */
+
+.athkar-grid { display: grid; gap: var(--space-3);
+               grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.athkar-card { display: flex; align-items: center; gap: var(--space-4);
+               padding: var(--space-4); font: inherit; color: inherit;
+               text-align: start; cursor: default;
+               transition: background var(--duration-micro) var(--ease),
+                           transform var(--duration-micro) var(--ease); }
+.athkar-card:hover { background: var(--tint); }
+.athkar-card:active { transform: scale(var(--press-scale)); }
+.athkar-card-body { display: flex; flex-direction: column; min-inline-size: 0; }
+.athkar-card-title { font-family: var(--font-arabic); font-size: 19px; line-height: 1.5;
+                     letter-spacing: normal; }
+.athkar-card-meta { font-size: var(--text-micro); color: var(--text-2);
+                    text-transform: uppercase; letter-spacing: 0.1em; }
+
+.athkar-list { display: flex; flex-direction: column; }
+.athkar-row { display: flex; align-items: center; justify-content: space-between;
+              gap: var(--space-4); padding: var(--space-3) var(--space-4);
+              border: 0; background: transparent; font: inherit; color: inherit;
+              text-align: start; cursor: default; border-radius: var(--radius-sm);
+              transition: background var(--duration-micro) var(--ease); }
+.athkar-row + .athkar-row { box-shadow: 0 -1px 0 var(--separator); }
+.athkar-row:hover { background: var(--fill-quieter); }
+.athkar-row-title { font-family: var(--font-arabic); font-size: 18px; line-height: 1.6;
+                    letter-spacing: normal; }
+.athkar-row-count { font-size: var(--text-caption); color: var(--text-2);
+                    font-variant-numeric: tabular-nums; }
+
+/* ------------------------------ progress -------------------------------- */
+
+.athkar-progress { block-size: 3px; border-radius: var(--radius-full);
+                   background: var(--fill-quiet); overflow: hidden; }
+.athkar-progress > span { display: block; block-size: 100%; background: var(--accent);
+                          transition: inline-size var(--duration-view) var(--ease); }
+.athkar-progress-label { font-size: var(--text-micro); color: var(--text-2);
+                         font-variant-numeric: tabular-nums; margin-block-start: var(--space-2);
+                         text-align: end; }
+
+/* §7.3: "a quiet, tasteful completion state — a soft accent wash and a single
+   line of text. Not confetti." */
+.athkar-complete { margin-block-start: var(--space-4); padding: var(--space-4);
+                   border-radius: var(--radius-sm); background: var(--tint);
+                   color: var(--accent); font-family: var(--font-arabic);
+                   font-size: 20px; letter-spacing: normal; text-align: center; }
+
+/* ------------------------------- a dhikr -------------------------------- */
+
+.athkar-cards { display: flex; flex-direction: column; gap: var(--space-4);
+                margin-block-start: var(--space-5); }
+.dhikr { padding: var(--space-5); transition: opacity var(--duration-view) var(--ease); }
+.dhikr-done { opacity: 0.62; }
+
+.dhikr-text {
+  font-family: var(--font-quran);
+  font-size: 24px;
+  /* Many adhkar are Quran; below 2.0 the tashkeel clips (DESIGN_NOTES.md §2.2). */
+  line-height: 2.1;
+  letter-spacing: normal;
+  margin: 0 0 var(--space-4);
+  text-align: justify;
+  text-align-last: right;
+}
+
+.dhikr-foot { display: flex; align-items: center; gap: var(--space-3); }
+
+/* §7.3's "big circular tap target". Large enough to hit without aiming, which is
+   the point when you are counting to thirty-three. */
+.dhikr-counter {
+  inline-size: 76px; block-size: 76px; flex: 0 0 auto;
+  display: grid; place-items: center; gap: 0;
+  border-radius: var(--radius-full);
+  border: var(--rule) solid var(--accent);
+  background: var(--tint);
+  color: var(--accent);
+  font: inherit; cursor: default;
+  transition: background var(--duration-micro) var(--ease),
+              border-color var(--duration-micro) var(--ease);
+}
+.dhikr-counter:hover:not(:disabled) { background: var(--tint-strong); }
+.dhikr-counter:disabled { border-color: var(--rule-quiet); background: transparent;
+                          color: var(--text-2); }
+.dhikr-count { font-size: 26px; font-weight: var(--weight-title1);
+               font-variant-numeric: tabular-nums; line-height: 1; }
+.dhikr-of { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; }
+
+.dhikr-note-toggle { display: inline-flex; align-items: center; gap: 2px;
+                     border: 0; background: transparent; color: var(--text-2);
+                     cursor: default; padding: var(--space-1); }
+.dhikr-note-toggle svg { transition: transform var(--duration-micro) var(--ease); }
+.dhikr-note { margin-block-start: var(--space-3); padding-block-start: var(--space-3);
+              border-block-start: 1px solid var(--separator);
+              font-family: var(--font-arabic); font-size: var(--text-callout);
+              line-height: 1.8; letter-spacing: normal; color: var(--text-2); }
+.dhikr-benefit { margin-block-start: var(--space-2); }
+
+/* ------------------------------- tasbeeh -------------------------------- */
+
+.tasbeeh { display: flex; align-items: center; justify-content: space-between;
+           gap: var(--space-5); padding: var(--space-4) var(--space-5); }
+.tasbeeh-body { display: flex; flex-direction: column; gap: 2px; }
+.tasbeeh-count { font-size: 40px; font-weight: var(--weight-display);
+                 letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.tasbeeh-target { display: inline-flex; align-items: center; gap: var(--space-2);
+                  font-size: var(--text-micro); text-transform: uppercase;
+                  letter-spacing: 0.12em; color: var(--text-2); }
+.tasbeeh-target input { inline-size: 5ch; border: var(--rule) solid var(--rule-colour);
+                        border-radius: var(--radius-xs); background: transparent;
+                        color: var(--text); font: inherit; font-size: var(--text-caption);
+                        padding: 2px var(--space-1); text-align: center; }
+.tasbeeh-actions { display: flex; align-items: center; gap: var(--space-3); }
+.tasbeeh-tap { inline-size: 60px; block-size: 60px; border-radius: var(--radius-full);
+               border: var(--rule) solid var(--accent); background: var(--tint);
+               color: var(--accent); font-size: 26px; line-height: 1; cursor: default;
+               transition: background var(--duration-micro) var(--ease); }
+.tasbeeh-tap:hover { background: var(--tint-strong); }

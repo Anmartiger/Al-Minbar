@@ -1,12 +1,9 @@
-import Database from '@tauri-apps/plugin-sql';
-import { invoke } from '@tauri-apps/api/core';
-import { isTauri } from './tauri';
+import { queryContent as query, execContent } from './content';
+export type { DatabaseInfo } from './content';
 
 /* Reader-side access to the bundled Quran database (Claude.md §4.2).
    The database is built by scripts/build-quran-db.py and installed into the XDG
    data dir on first run; §3 puts the queries here, through tauri-plugin-sql. */
-
-export type DatabaseInfo = { path: string; available: boolean; schemaVersion: number };
 
 export type Surah = {
   number: number;
@@ -70,38 +67,7 @@ export const NORMALISATION_CASES: Array<[string, string]> = [
 
 /* ------------------------------ connection ------------------------------- */
 
-let handle: Database | null = null;
-let info: DatabaseInfo | null = null;
-
-export async function quranDatabase(): Promise<DatabaseInfo> {
-  if (!isTauri()) return { path: '', available: false, schemaVersion: 0 };
-  if (!info) info = await invoke<DatabaseInfo>('quran_database');
-  return info;
-}
-
-async function db(): Promise<Database | null> {
-  if (handle) return handle;
-  const meta = await quranDatabase();
-  if (!meta.available) return null;
-  handle = await Database.load(`sqlite:${meta.path}`);
-  // The user's own tables live alongside the shipped content and are created on
-  // demand, so a database rebuilt from new source text keeps bookmarks.
-  await handle.execute(`
-    CREATE TABLE IF NOT EXISTS bookmarks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT, surah INTEGER NOT NULL, ayah INTEGER NOT NULL,
-      note TEXT, created_at INTEGER NOT NULL, UNIQUE (surah, ayah));
-    CREATE TABLE IF NOT EXISTS reading_state (
-      id INTEGER PRIMARY KEY CHECK (id = 1), surah INTEGER NOT NULL, ayah INTEGER NOT NULL,
-      page INTEGER NOT NULL, mode TEXT NOT NULL, updated_at INTEGER NOT NULL);
-  `);
-  return handle;
-}
-
-async function query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
-  const conn = await db();
-  if (!conn) return [];
-  return conn.select<T[]>(sql, params);
-}
+export { contentDatabase as quranDatabase } from './content';
 
 /* -------------------------------- reads ---------------------------------- */
 
@@ -199,30 +165,26 @@ export const listBookmarks = () =>
   query<Bookmark>('SELECT id, surah, ayah, note, created_at FROM bookmarks ORDER BY surah, ayah');
 
 export async function toggleBookmark(surah: number, ayah: number): Promise<boolean> {
-  const conn = await db();
-  if (!conn) return false;
-  const existing = await conn.select<Bookmark[]>(
+  const existing = await query<Bookmark>(
     'SELECT id FROM bookmarks WHERE surah = $1 AND ayah = $2', [surah, ayah]);
   if (existing.length) {
-    await conn.execute('DELETE FROM bookmarks WHERE surah = $1 AND ayah = $2', [surah, ayah]);
+    await execContent('DELETE FROM bookmarks WHERE surah = $1 AND ayah = $2', [surah, ayah]);
     return false;
   }
-  await conn.execute(
+  await execContent(
     'INSERT INTO bookmarks (surah, ayah, note, created_at) VALUES ($1, $2, NULL, $3)',
     [surah, ayah, Math.floor(Date.now() / 1000)]);
   return true;
 }
 
 export async function setBookmarkNote(surah: number, ayah: number, note: string) {
-  const conn = await db();
-  await conn?.execute('UPDATE bookmarks SET note = $1 WHERE surah = $2 AND ayah = $3',
+  await execContent('UPDATE bookmarks SET note = $1 WHERE surah = $2 AND ayah = $3',
     [note.trim() || null, surah, ayah]);
 }
 
 /** §7.2: "last position saved continuously and restored on launch". */
 export async function saveReadingState(s: Omit<ReadingState, 'updated_at'>) {
-  const conn = await db();
-  await conn?.execute(
+  await execContent(
     `INSERT INTO reading_state (id, surah, ayah, page, mode, updated_at)
      VALUES (1, $1, $2, $3, $4, $5)
      ON CONFLICT(id) DO UPDATE SET

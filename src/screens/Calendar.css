@@ -1,0 +1,53 @@
+/* §7.5 — the Hijri calendar. */
+
+.calendar { padding: var(--space-7) var(--space-8) var(--space-9);
+            max-inline-size: 720px; margin-inline: auto; }
+
+.cal-head { display: flex; align-items: center; justify-content: space-between;
+            gap: var(--space-4); margin-block-end: var(--space-5); }
+.cal-title { text-align: center; }
+.cal-month { font-family: var(--font-arabic); font-size: 28px; line-height: 1.4;
+             letter-spacing: normal; }
+.cal-sub { font-size: var(--text-micro); text-transform: uppercase;
+           letter-spacing: 0.14em; color: var(--text-2); }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 1px; padding: var(--space-3); }
+.cal-weekday { font-size: var(--text-micro); text-transform: uppercase;
+               letter-spacing: 0.1em; color: var(--text-2); text-align: center;
+               padding-block-end: var(--space-2); }
+
+.cal-cell { position: relative; aspect-ratio: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 1px;
+            border-radius: var(--radius-xs); }
+.cal-blank { visibility: hidden; }
+.cal-hijri { font-size: var(--text-body); font-variant-numeric: tabular-nums;
+             line-height: 1.1; }
+/* §7.5: "Gregorian dates in the corner of each cell." */
+.cal-greg { position: absolute; inset-block-start: 3px; inset-inline-end: 5px;
+            font-size: 9px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* §7.5: "today marked with the accent". */
+.cal-today { background: var(--accent); color: var(--accent-fg); }
+.cal-today .cal-greg { color: var(--accent-fg); opacity: 0.8; }
+
+.cal-marked:not(.cal-today) { background: var(--tint); }
+.cal-dot { position: absolute; inset-block-end: 5px; inline-size: 4px; block-size: 4px;
+           border-radius: var(--radius-full); background: var(--accent); }
+.cal-today .cal-dot { background: var(--accent-fg); }
+
+.cal-legend { list-style: none; margin: var(--space-4) 0 0; padding: 0;
+              display: flex; flex-direction: column; gap: var(--space-1); }
+.cal-legend li { display: flex; align-items: baseline; gap: var(--space-3);
+                 font-size: var(--text-caption); color: var(--text-2); }
+.cal-legend-day { min-inline-size: 2.5ch; text-align: end; color: var(--accent);
+                  font-variant-numeric: tabular-nums; font-weight: var(--weight-caption); }
+
+.cal-adjust { display: flex; align-items: center; justify-content: space-between;
+              gap: var(--space-5); padding: var(--space-4) var(--space-5);
+              margin-block-start: var(--space-6); }
+.cal-adjust-controls { display: flex; align-items: center; gap: var(--space-2); }
+.cal-adjust-value { min-inline-size: 3ch; text-align: center; font-size: var(--text-headline);
+                    font-variant-numeric: tabular-nums; }
+.cal-note { margin: var(--space-1) 0 0; font-size: var(--text-caption);
+            color: var(--text-2); max-inline-size: 48ch; }

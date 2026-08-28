@@ -1,4 +1,4 @@
-"""Build the bundled Quran database (Claude.md §4.2).
+"""Build the bundled content database (Claude.md §4.2, §4.3).
 
 Reads the committed source texts in `data/quran/` and produces
 `src-tauri/resources/quran.db`. The database is derived, so it is gitignored; the
@@ -8,7 +8,7 @@ sources it is built from are committed, which is what makes the build reproducib
 ship", so this script asserts every count the spec names and refuses to write a
 database that fails any of them.
 
-  python3 scripts/build-quran-db.py
+  python3 scripts/build-content-db.py
 """
 import hashlib
 import json
@@ -236,6 +236,23 @@ def main():
             key TEXT PRIMARY KEY, title TEXT NOT NULL, source TEXT NOT NULL,
             license TEXT NOT NULL, notice TEXT);
         CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+
+        -- §4.3 athkar. The source is the publisher's own feed, which carries text
+        -- and repeat count; reference and benefit are nullable because it does not
+        -- expose them and §12.3 forbids inventing them.
+        CREATE TABLE athkar_categories (
+            id INTEGER PRIMARY KEY, title TEXT NOT NULL, position INTEGER NOT NULL,
+            entry_count INTEGER NOT NULL, audio TEXT);
+        CREATE TABLE athkar (
+            -- Surrogate key: a dhikr can legitimately appear in more than one
+            -- chapter (جزاك الله خيرا is in both 86 and 87), so the publisher's id
+            -- is not unique and is kept as plain data.
+            row_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_id INTEGER NOT NULL,
+            category_id INTEGER NOT NULL REFERENCES athkar_categories(id),
+            position INTEGER NOT NULL, text TEXT NOT NULL, repeat INTEGER NOT NULL,
+            reference TEXT, benefit TEXT, audio TEXT);
+        CREATE INDEX athkar_by_category ON athkar(category_id, position);
     """)
 
     db.executemany(
@@ -315,6 +332,32 @@ def main():
         db.executemany("INSERT INTO mushaf_lines VALUES (?,?,?,?,?)", rows)
         layout_rows = len(rows)
 
+    # ---- §4.3 athkar -------------------------------------------------------
+    athkar_path = f"{SRC.replace('quran', 'athkar')}/hisn-al-muslim.json"
+    athkar_total = 0
+    if os.path.exists(athkar_path):
+        book = json.load(open(athkar_path, encoding="utf-8"))
+        cat_rows, entry_rows = [], []
+        for position, cat in enumerate(book["categories"], 1):
+            cat_rows.append((cat["id"], cat["title"], position, len(cat["entries"]), cat.get("audio")))
+            for i, e in enumerate(cat["entries"], 1):
+                entry_rows.append((e["id"], cat["id"], i, e["text"], max(1, e["repeat"]),
+                                   e.get("reference"), e.get("benefit"), e.get("audio")))
+        # e["id"] is the publisher's, and repeats across chapters - see the schema.
+        # A dhikr with no text, or a category with none, would render as a blank
+        # card - §12.4 forbids that reaching a commit.
+        if any(not r[3].strip() for r in entry_rows):
+            print("REFUSING: an athkar entry has no text", file=sys.stderr)
+            sys.exit(1)
+        if any(c[3] == 0 for c in cat_rows):
+            print("REFUSING: an athkar category has no entries", file=sys.stderr)
+            sys.exit(1)
+        db.executemany("INSERT INTO athkar_categories VALUES (?,?,?,?,?)", cat_rows)
+        db.executemany(
+            "INSERT INTO athkar (source_id, category_id, position, text, repeat, "
+            "reference, benefit, audio) VALUES (?,?,?,?,?,?,?,?)", entry_rows)
+        athkar_total = len(entry_rows)
+
     db.executemany("INSERT INTO attributions VALUES (?,?,?,?,?)", [
         ("quran-uthmani", "Tanzil Quran Text (Uthmani)", "https://tanzil.net",
          "Creative Commons Attribution 3.0", uthmani_notice),
@@ -327,6 +370,11 @@ def main():
          "Line positions of the King Fahd Complex printed mushaf."),
         ("cities", "GeoNames cities5000", "https://www.geonames.org",
          "Creative Commons Attribution 4.0", None),
+        ("athkar", "حصن المسلم — Hisn al-Muslim, سعيد بن علي بن وهف القحطاني",
+         "https://www.hisnmuslim.com", "See the About the data screen",
+         "Taken from the book's own website. The publisher's feed carries the text "
+         "and repeat count only, so hadith references and benefit notes are absent "
+         "rather than sourced elsewhere."),
     ])
     db.executemany("INSERT INTO meta VALUES (?,?)", [
         ("uthmani_sha256", checksum),
@@ -336,6 +384,7 @@ def main():
         ("sajda_count", str(len(meta["sajdas"]))),
         ("mushaf_lines", str(layout_rows)),
         ("bismillah_prefixed_surahs", str(with_prefix)),
+        ("athkar_count", str(athkar_total)),
     ])
     db.commit()
     db.execute("VACUUM")
@@ -347,6 +396,8 @@ def main():
           f"sajdas {len(meta['sajdas'])}")
     print(f"  mushaf line rows: {layout_rows}" if layout_rows else
           "  mushaf line layout: ABSENT - page mode falls back to flowed verses (§4.2)")
+    print(f"  athkar: {athkar_total} adhkar" if athkar_total else
+          "  athkar: ABSENT - run scripts/fetch-athkar.py")
     print(f"  uthmani sha256: {checksum}")
 
 if __name__ == "__main__":

@@ -1,0 +1,38 @@
+/* The section rail. */
+
+.nav {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  border-inline-end: 1px solid var(--hairline);
+}
+
+.nav-item {
+  display: grid;
+  place-items: center;
+  inline-size: 38px;
+  block-size: 38px;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  text-decoration: none;
+  position: relative;
+  transition: background var(--duration-micro) var(--ease),
+              color var(--duration-micro) var(--ease);
+}
+.nav-item:hover { background: var(--fill-quiet); color: var(--text); }
+.nav-item[aria-current='page'] { color: var(--accent); background: var(--tint); }
+/* A rule on the leading edge marks position, as the timetable does. */
+.nav-item[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--space-2));
+  inset-block: 8px;
+  inline-size: 2px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+}
+.nav-spacer { flex: 1; }
+.nav-mark { display: none; }

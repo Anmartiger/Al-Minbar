@@ -7,11 +7,11 @@
     "fonts": "node scripts/generate-fonts.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "dev": "npm run fonts && vite",
-    "build": "npm run fonts && npm run check:contrast && npm run check:logic && npm run quran && tsc && vite build",
+    "build": "npm run fonts && npm run check:contrast && npm run check:logic && npm run content && tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
     "check:logic": "node scripts/check-prayer-logic.mjs",
-    "quran": "python3 scripts/build-quran-db.py"
+    "content": "python3 scripts/build-content-db.py"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

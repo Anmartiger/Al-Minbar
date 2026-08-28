@@ -101,3 +101,7 @@
 .resize-handle { --grab: calc(var(--frame-margin, 0px) + var(--resize-hit)); }
 /* Corners must win over the edges they overlap. */
 .resize-nw, .resize-ne, .resize-sw, .resize-se { z-index: 11; }
+
+/* Section rail beside the routed view. */
+.app-shell { display: flex; height: 100%; min-height: 0; }
+.app-view { flex: 1; min-inline-size: 0; overflow-y: auto; }

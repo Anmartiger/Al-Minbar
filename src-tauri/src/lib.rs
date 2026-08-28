@@ -157,6 +157,34 @@ fn clear_audio_cache() -> Result<(), String> {
     recitation::clear_cache()
 }
 
+/// §7.5's Hijri month grid, with each day's Gregorian date and the occasions
+/// that section names.
+#[tauri::command]
+fn hijri_month(
+    year: Option<i64>,
+    month: Option<u32>,
+    adjustment: i64,
+) -> Result<prayer::hijri::CalendarMonth, String> {
+    use chrono::Datelike;
+    let now = chrono::Local::now().date_naive();
+    let today_jdn = prayer::hijri::gregorian_to_jdn(now.year(), now.month(), now.day());
+    let current = prayer::hijri::jdn_to_hijri(today_jdn + adjustment);
+    let y = year.unwrap_or(current.year);
+    let m = month.unwrap_or(current.month);
+    if !(1..=12).contains(&m) {
+        return Err(format!("month {m} is out of range"));
+    }
+    Ok(prayer::hijri::calendar_month(y, m, adjustment, today_jdn))
+}
+
+/// Today in the Hijri calendar, so the calendar knows where to open.
+#[tauri::command]
+fn hijri_today(adjustment: i64) -> prayer::hijri::HijriDate {
+    use chrono::Datelike;
+    let now = chrono::Local::now().date_naive();
+    prayer::hijri::from_gregorian(now.year(), now.month(), now.day(), adjustment)
+}
+
 #[tauri::command]
 fn default_location() -> prayer::Location {
     prayer::Location::default()
@@ -502,6 +530,8 @@ pub fn run() {
             qibla,
             default_location,
             quran_database,
+            hijri_month,
+            hijri_today,
             reciters,
             recitation_status,
             store_recitation,

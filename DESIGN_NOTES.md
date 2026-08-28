@@ -677,3 +677,54 @@ be exactly the invention §12.3 forbids, so the category is omitted. The Quran
 reader already holds every text it would draw on.
 
 §4.3's التسبيح (free counter) needs no dataset and is built as a counter.
+
+---
+
+## 11. Phase 5 decisions
+
+### 11.1 Athkar sessions rather than split chapters
+
+Morning and evening are one chapter in the book (§10.2), so the two daily
+completions §7.3 asks for are told apart by **when the set is done**, not by which
+adhkar it contains — anything before local noon counts as the morning sitting. The
+progress key is `(category, session, day, dhikr)`, and the day is the user's local
+calendar day so a set resets at their midnight rather than UTC's.
+
+The counter counts **down** as §7.3 specifies (33 → 32 → …), because what you need
+mid-dhikr is how many are left, not how many you have done.
+
+### 11.2 The qibla dial does not move, on purpose
+
+§7.4: "a laptop has no magnetometer, so the app cannot know which way the user is
+facing. [...] Do not fake a live needle."
+
+So north is fixed at the top and the Kaaba marker sits at the computed bearing.
+Nothing rotates, because nothing here knows the device's heading. The limitation
+gets its own framed block rather than a footnote — on this screen it is the most
+important thing on it.
+
+**Magnetic declination is omitted**, which §7.4 explicitly permits: "show the local
+magnetic declination if you can compute it offline; otherwise omit it rather than
+guessing." Computing it needs a geomagnetic model (WMM/IGRF coefficient tables) the
+app does not carry, and a guessed offset is worse than none. The screen says so
+plainly rather than leaving the reader to assume the bearing is magnetic.
+
+### 11.3 The calendar is generated in Rust
+
+The Hijri arithmetic already lives there, so the month grid comes from
+`hijri_month` rather than being reimplemented in TypeScript where it could drift.
+It returns each day's Gregorian date, its weekday, and the occasions §7.5 names.
+
+The ±1 adjustment shifts the **Gregorian mapping**, not the Hijri date — moving the
+Hijri number would renumber the month rather than move it against the solar
+calendar, which is the opposite of what local sighting does.
+
+Occasions are positions in the Hijri month, not claims about when it truly begins;
+that is the adjustment's job. Laylat al-Qadr is marked on the 27th as "most likely"
+rather than asserted, since it is not fixed.
+
+### 11.4 A rail, not a bar
+
+Five fixed destinations and a wide window: a vertical rail keeps the height for
+content and reads as chrome rather than as content. Position is marked with a rule
+on the leading edge, the same device the timetable uses.
