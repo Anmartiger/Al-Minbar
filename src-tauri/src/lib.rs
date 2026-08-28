@@ -1,6 +1,7 @@
 pub mod audio;
 pub mod cities;
 pub mod prayer;
+pub mod quran;
 pub mod scheduler;
 pub mod settings;
 pub mod sni;
@@ -97,6 +98,12 @@ fn qibla(latitude: f64, longitude: f64) -> Qibla {
         bearing: prayer::qibla_bearing(latitude, longitude),
         distance_km: prayer::distance_to_makkah_km(latitude, longitude),
     }
+}
+
+/// §4.2's bundled database, installed into the XDG data dir on first run.
+#[tauri::command]
+fn quran_database(app: AppHandle) -> Result<quran::DatabaseInfo, String> {
+    quran::ensure(&app)
 }
 
 #[tauri::command]
@@ -418,6 +425,8 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        // §3: "Database SQLite via tauri-plugin-sql".
+        .plugin(tauri_plugin_sql::Builder::default().build())
         // §8.1 names the file exactly: "writes ~/.config/autostart/al-minabr.desktop",
         // and §10 checks for that path by name when autostart is switched off. The
         // plugin defaults to the product name ("Al-Minabr.desktop"), so the app id
@@ -441,6 +450,7 @@ pub fn run() {
             search_cities,
             qibla,
             default_location,
+            quran_database,
             get_settings,
             set_settings,
             status,

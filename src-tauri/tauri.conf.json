@@ -36,6 +36,9 @@
         "depends": [],
         "desktopTemplate": "al-minabr.desktop"
       }
-    }
+    },
+    "resources": [
+      "resources/quran.db"
+    ]
   }
 }

@@ -7,13 +7,15 @@
     "fonts": "node scripts/generate-fonts.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "dev": "npm run fonts && vite",
-    "build": "npm run fonts && npm run check:contrast && npm run check:logic && tsc && vite build",
+    "build": "npm run fonts && npm run check:contrast && npm run check:logic && npm run quran && tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "check:logic": "node scripts/check-prayer-logic.mjs"
+    "check:logic": "node scripts/check-prayer-logic.mjs",
+    "quran": "python3 scripts/build-quran-db.py"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-sql": "^2.4.0",
     "@tauri-apps/plugin-window-state": "^2",
     "framer-motion": "^13.1.1",
     "lucide-react": "^1.34.0",
