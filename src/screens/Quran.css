@@ -1,0 +1,232 @@
+/* §7.2 — the Quran reader. */
+
+.quran { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+
+/* ------------------------------- toolbar -------------------------------- */
+
+.quran-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  border-block-end: 1px solid var(--hairline);
+  flex: 0 0 auto;
+}
+.quran-bar-title { display: flex; align-items: baseline; gap: var(--space-2); min-inline-size: 0; }
+.quran-bar-name {
+  font-family: var(--font-arabic);
+  font-size: var(--text-title2);
+  line-height: var(--lh-arabic-ui);
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.quran-bar-sub { font-size: var(--text-caption); color: var(--text-2); white-space: nowrap; }
+.quran-bar .spacer { flex: 1; }
+
+.quran-body { flex: 1; min-height: 0; display: flex; }
+.quran-scroll { flex: 1; min-width: 0; overflow-y: auto; }
+
+/* --------------------------- surah browser ------------------------------ */
+
+.browser { padding: var(--space-5) var(--space-6) var(--space-8); max-inline-size: 760px; margin-inline: auto; }
+.browser-search { margin-block-end: var(--space-5); }
+
+/* §7.2: "surah number in a decorative frame". An eight-pointed star, the shape
+   the printed mushaf uses around juz and surah numerals. */
+.surah-frame {
+  position: relative;
+  inline-size: 40px;
+  block-size: 40px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+.surah-frame svg { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; opacity: 0.42; }
+.surah-frame span { position: relative; font-weight: var(--weight-caption); }
+
+.surah-name { font-family: var(--font-arabic); font-size: var(--text-title2);
+              line-height: var(--lh-arabic-ui); letter-spacing: normal; }
+.surah-meta { display: flex; align-items: center; gap: var(--space-2);
+              font-size: var(--text-caption); color: var(--text-2); }
+
+/* --------------------------- reading mode ------------------------------- */
+
+.reading {
+  /* §7.2: "comfortable measure (max-inline-size: 70ch)". */
+  max-inline-size: 70ch;
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-6) var(--space-10);
+}
+
+.verse-block {
+  position: relative;
+  padding: var(--space-3) var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  transition: background var(--duration-micro) var(--ease);
+}
+.verse-block:hover, .verse-block:focus-within { background: var(--fill-quieter); }
+/* §7.2: the recited verse gets "a soft accent wash". */
+.verse-block[data-playing='true'] { background: var(--tint); }
+
+.verse-text {
+  font-family: var(--font-quran);
+  font-size: var(--quran-size, 30px);
+  /* Never below 2.0 — Amiri Quran's own line box is 2.449em and tashkeel clips
+     under it (DESIGN_NOTES.md §2.2). */
+  line-height: var(--quran-line-height, 2.1);
+  letter-spacing: normal;
+  text-align: justify;
+  text-align-last: right;
+}
+
+/* §5.3: "Verse-end markers use the Quranic end-of-ayah symbol ۝ (U+06DD) with the
+   number composed inside where the font supports it; otherwise render a circular
+   badge." Amiri Quran has U+06DD but does not compose digits into it, so the
+   number is layered over the glyph. */
+.ayah-marker {
+  display: inline-grid;
+  place-items: center;
+  position: relative;
+  font-family: var(--font-quran);
+  font-size: 1.15em;
+  color: var(--accent);
+  vertical-align: middle;
+  margin-inline: 0.15em;
+  user-select: none;
+}
+.ayah-marker-glyph { grid-area: 1 / 1; }
+.ayah-marker-number {
+  grid-area: 1 / 1;
+  font-family: var(--font-arabic);
+  font-size: 0.4em;
+  line-height: 1;
+  letter-spacing: normal;
+  padding-block-start: 0.06em;
+}
+
+.verse-translation {
+  margin-block-start: var(--space-3);
+  font-size: var(--text-callout);
+  line-height: 1.6;
+  color: var(--text-2);
+  max-inline-size: 68ch;
+}
+
+/* §7.2: "hover/focus reveals a compact action row". */
+.verse-actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-block-start: var(--space-2);
+  opacity: 0;
+  transition: opacity var(--duration-micro) var(--ease);
+}
+.verse-block:hover .verse-actions,
+.verse-block:focus-within .verse-actions { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .verse-actions { opacity: 1; } }
+
+.sajda-chip {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  font-size: var(--text-micro); color: var(--text-2);
+  padding: 2px var(--space-2); border-radius: var(--radius-full);
+  border: 1px solid var(--separator); margin-inline-start: var(--space-2);
+}
+
+/* ---------------------------- mushaf mode ------------------------------- */
+
+.mushaf {
+  max-inline-size: 720px;
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100%;
+}
+.mushaf-page { flex: 1; }
+
+.mushaf-line {
+  font-family: var(--font-quran);
+  font-size: var(--quran-size, 28px);
+  line-height: var(--quran-line-height, 2.1);
+  letter-spacing: normal;
+  /* The printed mushaf justifies every line to both margins. */
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35em;
+  flex-wrap: nowrap;
+}
+/* The final line of a page is not stretched — same as print. */
+.mushaf-line[data-last='true'] { justify-content: center; }
+.mushaf-word { white-space: nowrap; }
+.mushaf-word[data-playing='true'] { color: var(--accent); }
+
+/* §7.2: "Surah headers rendered as a framed band; بسم الله الرحمن الرحيم centred
+   where it belongs." */
+.surah-band {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-block: var(--space-4) var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  background: var(--tint);
+  color: var(--accent);
+  font-family: var(--font-arabic);
+  font-size: var(--text-headline);
+  letter-spacing: normal;
+}
+.basmalah {
+  font-family: var(--font-quran);
+  font-size: calc(var(--quran-size, 28px) * 0.82);
+  line-height: 2.0;
+  letter-spacing: normal;
+  text-align: center;
+  margin-block: var(--space-2) var(--space-3);
+  color: var(--text);
+}
+
+.mushaf-footer {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-4);
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--separator);
+}
+
+/* ------------------------------- panel ---------------------------------- */
+
+/* §7.2: "Tafsir and translation open in a right-side panel, not a modal, so
+   reading continues." */
+.quran-panel {
+  flex: 0 0 360px;
+  border-inline-start: 1px solid var(--hairline);
+  overflow-y: auto;
+  padding: var(--space-5);
+}
+.quran-panel h3 { font-size: var(--text-caption); text-transform: uppercase;
+                  letter-spacing: 0.06em; color: var(--text-2); margin: 0 0 var(--space-2); }
+.quran-panel-ref { font-size: var(--text-micro); color: var(--text-2); margin-block-end: var(--space-4); }
+.panel-arabic {
+  font-family: var(--font-arabic);
+  font-size: var(--text-body);
+  line-height: 1.9;
+  letter-spacing: normal;
+  white-space: pre-wrap;
+}
+.panel-latin { font-size: var(--text-callout); line-height: 1.6; }
+.quran-panel-head { display: flex; align-items: center; justify-content: space-between;
+                    gap: var(--space-2); margin-block-end: var(--space-3); }
+
+/* ------------------------------- search --------------------------------- */
+
+.hit-list { padding: var(--space-4) var(--space-6) var(--space-8); max-inline-size: 780px; margin-inline: auto; }
+.hit { padding: var(--space-3); border-radius: var(--radius-md); cursor: default;
+       transition: background var(--duration-micro) var(--ease); }
+.hit:hover { background: var(--fill-quieter); }
+.hit-ref { font-size: var(--text-micro); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.hit-text { font-family: var(--font-quran); font-size: 22px; line-height: 2.0;
+            letter-spacing: normal; margin-block-start: var(--space-1); }
+.hit-text mark { background: var(--tint-strong); color: inherit; border-radius: 3px; }

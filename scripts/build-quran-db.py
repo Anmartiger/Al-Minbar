@@ -287,6 +287,31 @@ def main():
         layout = json.load(open(layout_path))
         rows = [(int(p), ln, su, ay, pos)
                 for p, lines in layout["pages"].items() for ln, su, ay, pos in lines]
+
+        # The layout indexes words the way quran.com does, which counts each
+        # verse's end-of-ayah marker as a final word. So a verse of n words has
+        # positions 1..n+1, and a line starting at n+1 begins with that marker -
+        # what happens in the printed mushaf when the marker wraps to the next
+        # line. The renderer therefore walks [w1..wn, MARKER] per verse.
+        #
+        # Asserted rather than assumed: an overshoot of anything but exactly 1
+        # would mean the two tokenisations have genuinely diverged, and every
+        # line break on the page would land in the wrong place.
+        token_count = {k: len(v.split()) for k, v in uthmani.items()}
+        overshoot = set()
+        for _p, _ln, su, ay, pos in rows:
+            n = token_count.get((su, ay))
+            if n is None:
+                print(f"REFUSING: layout references {su}:{ay}, which is not in the text",
+                      file=sys.stderr)
+                sys.exit(1)
+            if pos > n:
+                overshoot.add(pos - n)
+        if overshoot - {1}:
+            print(f"REFUSING: mushaf layout word positions overshoot by {sorted(overshoot)}; "
+                  f"only the end-of-ayah marker (+1) is expected", file=sys.stderr)
+            sys.exit(1)
+
         db.executemany("INSERT INTO mushaf_lines VALUES (?,?,?,?,?)", rows)
         layout_rows = len(rows)
 

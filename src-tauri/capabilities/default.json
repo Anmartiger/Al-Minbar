@@ -1,0 +1,27 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissions for the main and mini windows.",
+  "windows": ["main", "mini"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-resize-dragging",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-minimize",
+    "core:window:allow-close",
+    "core:window:allow-set-position",
+    "core:window:allow-is-maximized",
+    "core:app:allow-name",
+    "notification:default",
+    "store:default",
+    "autostart:default",
+    "global-shortcut:default",
+    {
+      "identifier": "sql:allow-load",
+      "allow": [{ "path": "$APPDATA/al-minabr.db" }]
+    },
+    "sql:allow-select",
+    "sql:allow-execute",
+    "sql:allow-close"
+  ]
+}

@@ -8,21 +8,28 @@ import {
 import Home from './screens/Home';
 import Gallery from './dev/Gallery';
 import Mini from './screens/Mini';
+import Quran from './screens/Quran';
 
 /** §11 Phase 1 asks for a /dev/components gallery route. No router in the stack
  *  (§3), and one dev route does not justify adding one - the hash form also works
  *  in a packaged build where a deep path would not resolve. */
 const GALLERY_HASH = '#/dev/components';
 const MINI_HASH = '#/mini';
+const QURAN_HASH = '#/quran';
 const isGalleryRoute = () =>
   location.pathname === '/dev/components' || location.hash === GALLERY_HASH;
 /** §8.3's mini window is a second window on the same bundle, told apart by route. */
 const isMiniRoute = () => location.hash === MINI_HASH;
+const isQuranRoute = () => location.hash === QURAN_HASH;
 
-function useHashRoute(): boolean {
-  const [gallery, setGallery] = useState(isGalleryRoute);
+type Route = 'home' | 'gallery' | 'quran';
+const currentRoute = (): Route =>
+  isGalleryRoute() ? 'gallery' : isQuranRoute() ? 'quran' : 'home';
+
+function useHashRoute(): Route {
+  const [route, setRoute] = useState(currentRoute);
   useEffect(() => {
-    const sync = () => setGallery(isGalleryRoute());
+    const sync = () => setRoute(currentRoute());
     window.addEventListener('hashchange', sync);
     window.addEventListener('popstate', sync);
     // A frameless window has no address bar, so the gallery needs a way in that
@@ -41,12 +48,12 @@ function useHashRoute(): boolean {
       window.removeEventListener('keydown', onKey);
     };
   }, []);
-  return gallery;
+  return route;
 }
 
 export default function App() {
   const chrome = useWindowChrome();
-  const gallery = useHashRoute();
+  const route = useHashRoute();
   const [{ theme, accent }] = useState(loadAppearance);
   // §1: the product name lives once, in tauri.conf.json - never hard-coded here.
   const [name, setName] = useState('');
@@ -77,7 +84,9 @@ export default function App() {
 
   return (
     <WindowFrame chrome={chrome} title={name}>
-      {gallery ? <Gallery /> : <Home arabicIndic={arabicIndic} />}
+      {route === 'gallery' ? <Gallery />
+        : route === 'quran' ? <Quran arabicIndic={arabicIndic} />
+        : <Home arabicIndic={arabicIndic} onOpenQuran={() => { location.hash = QURAN_HASH; }} />}
     </WindowFrame>
   );
 }

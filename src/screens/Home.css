@@ -204,3 +204,33 @@
   border-radius: var(--radius-sm); background: var(--fill-quieter);
   font-size: var(--text-caption); overflow-x: auto;
 }
+
+/* §7.2's "Continue reading" card, shown only when a reading position exists. */
+.continue-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-3) var(--space-4);
+  margin-block-end: var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: default;
+  transition: background var(--duration-micro) var(--ease),
+              transform var(--duration-micro) var(--ease);
+}
+.continue-card:hover { background: var(--surface-2); }
+.continue-card:active { transform: scale(var(--press-scale)); }
+.continue-icon { display: grid; place-items: center; inline-size: 36px; block-size: 36px;
+                 border-radius: var(--radius-full); background: var(--tint); color: var(--accent); }
+.continue-body { flex: 1; display: flex; flex-direction: column; min-inline-size: 0; }
+.continue-label { font-size: var(--text-micro); text-transform: uppercase;
+                  letter-spacing: 0.06em; color: var(--text-2); }
+.continue-ref { font-size: var(--text-body); font-variant-numeric: tabular-nums; }
+.continue-ref [lang='ar'] { font-family: var(--font-arabic); letter-spacing: normal; }
+.continue-card svg:last-child { color: var(--text-2); }

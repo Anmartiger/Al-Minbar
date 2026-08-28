@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Bell, BellOff, Compass, MapPin, Sunrise, Sunset, X } from 'lucide-react';
+import { Bell, BellOff, BookOpen, ChevronLeft, Compass, MapPin, Sunrise, Sunset, X } from 'lucide-react';
 import {
   Badge, Card, EmptyState, IconButton, List, ListRow, ProgressRing,
   SearchField, Sheet, Skeleton,
 } from '../components/ui';
 import { getStatus, type StatusView } from '../lib/status';
+import { listSurahs, readingState, type ReadingState, type Surah } from '../lib/quran';
 import {
   DEFAULT_SETTINGS, PRAYER_LABELS, backendAvailable, currentPrayer, defaultLocation,
   flatten, formatCountdown, prayerWindow, progressOf, qibla as fetchQibla, searchCities,
@@ -26,9 +27,9 @@ function skyFor(nowEpoch: number, sunrise?: PrayerTime, sunset?: PrayerTime) {
   return { top: '#3B4A7A', strength: '9%' };                             // night
 }
 
-type Props = { arabicIndic: boolean; onOpenQibla?: () => void };
+type Props = { arabicIndic: boolean; onOpenQibla?: () => void; onOpenQuran?: () => void };
 
-export default function Home({ arabicIndic, onOpenQibla }: Props) {
+export default function Home({ arabicIndic, onOpenQibla, onOpenQuran }: Props) {
   const [location, setLocation] = useState<Location | null>(null);
   const [days, setDays] = useState<DayTimes[] | null>(null);
   const [qiblaInfo, setQiblaInfo] = useState<Qibla | null>(null);
@@ -40,6 +41,7 @@ export default function Home({ arabicIndic, onOpenQibla }: Props) {
   const [hits, setHits] = useState<Array<Location & { name: string; name_ar: string }>>([]);
   const [trayMissing, setTrayMissing] = useState(false);
   const [trayNoticeDismissed, setTrayNoticeDismissed] = useState(false);
+  const [reading, setReading] = useState<{ state: ReadingState; surah?: Surah } | null>(null);
 
   /* §7.1: the countdown ticks every second. */
   useEffect(() => {
@@ -90,6 +92,16 @@ export default function Home({ arabicIndic, onOpenQibla }: Props) {
     getStatus()
       .then((s: StatusView | null) => setTrayMissing(Boolean(s && !s.trayAvailable)))
       .catch(() => {});
+  }, []);
+
+  /* §7.2: "a 'Continue reading' card on the home screen when a position exists". */
+  useEffect(() => {
+    if (!backendAvailable()) return;
+    readingState().then(async state => {
+      if (!state) return;
+      const surah = (await listSurahs()).find(s => s.number === state.surah);
+      setReading({ state, surah });
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -207,6 +219,21 @@ export default function Home({ arabicIndic, onOpenQibla }: Props) {
           </span>
         </div>
       </section>
+
+      {reading && onOpenQuran && (
+        <button className="continue-card" onClick={onOpenQuran}>
+          <span className="continue-icon"><BookOpen size={18} strokeWidth={1.5} /></span>
+          <span className="continue-body">
+            <span className="continue-label">Continue reading</span>
+            <span className="continue-ref">
+              <span lang="ar" dir="rtl">{reading.surah?.name_ar}</span>
+              {' · '}
+              {toDigits(reading.state.surah, arabicIndic)}:{toDigits(reading.state.ayah, arabicIndic)}
+            </span>
+          </span>
+          <ChevronLeft size={17} strokeWidth={1.5} />
+        </button>
+      )}
 
       <div className="home-list">
         <List>
