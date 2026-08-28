@@ -390,6 +390,15 @@ def main():
     db.execute("VACUUM")
     db.close()
 
+    # A stamp the app compares against the installed copy, so a rebuilt database
+    # actually replaces a stale one. Derived from the content itself rather than a
+    # timestamp, so an identical rebuild does not force a needless reinstall.
+    stamp = hashlib.sha256(
+        f"{checksum}|{len(keys)}|{layout_rows}|{athkar_total}|{len(meta['surahs'])}".encode()
+    ).hexdigest()[:16]
+    with open(os.path.join(os.path.dirname(OUT), "content.version"), "w") as f:
+        f.write(stamp + "\n")
+
     size = os.path.getsize(OUT) / 1024 / 1024
     print(f"{OUT}  {size:.1f} MB")
     print(f"  verses {len(keys)}  surahs {len(meta['surahs'])}  pages {len(meta['pages'])}  "
@@ -399,6 +408,7 @@ def main():
     print(f"  athkar: {athkar_total} adhkar" if athkar_total else
           "  athkar: ABSENT - run scripts/fetch-athkar.py")
     print(f"  uthmani sha256: {checksum}")
+    print(f"  content stamp : {stamp}")
 
 if __name__ == "__main__":
     main()

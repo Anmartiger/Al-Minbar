@@ -46,7 +46,8 @@
       }
     },
     "resources": [
-      "resources/quran.db"
+      "resources/quran.db",
+      "resources/content.version"
     ]
   }
 }

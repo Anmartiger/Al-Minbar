@@ -28,6 +28,9 @@
       "identifier": "sql:allow-load",
       "allow": [
         {
+          "path": "$APPDATA/content.db"
+        },
+        {
           "path": "$APPDATA/al-minabr.db"
         }
       ]

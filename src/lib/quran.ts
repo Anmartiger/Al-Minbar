@@ -162,30 +162,30 @@ export const searchSurahs = async (raw: string): Promise<Surah[]> => {
 /* --------------------------- bookmarks & state --------------------------- */
 
 export const listBookmarks = () =>
-  query<Bookmark>('SELECT id, surah, ayah, note, created_at FROM bookmarks ORDER BY surah, ayah');
+  query<Bookmark>('SELECT id, surah, ayah, note, created_at FROM user.bookmarks ORDER BY surah, ayah');
 
 export async function toggleBookmark(surah: number, ayah: number): Promise<boolean> {
   const existing = await query<Bookmark>(
-    'SELECT id FROM bookmarks WHERE surah = $1 AND ayah = $2', [surah, ayah]);
+    'SELECT id FROM user.bookmarks WHERE surah = $1 AND ayah = $2', [surah, ayah]);
   if (existing.length) {
-    await execContent('DELETE FROM bookmarks WHERE surah = $1 AND ayah = $2', [surah, ayah]);
+    await execContent('DELETE FROM user.bookmarks WHERE surah = $1 AND ayah = $2', [surah, ayah]);
     return false;
   }
   await execContent(
-    'INSERT INTO bookmarks (surah, ayah, note, created_at) VALUES ($1, $2, NULL, $3)',
+    'INSERT INTO user.bookmarks (surah, ayah, note, created_at) VALUES ($1, $2, NULL, $3)',
     [surah, ayah, Math.floor(Date.now() / 1000)]);
   return true;
 }
 
 export async function setBookmarkNote(surah: number, ayah: number, note: string) {
-  await execContent('UPDATE bookmarks SET note = $1 WHERE surah = $2 AND ayah = $3',
+  await execContent('UPDATE user.bookmarks SET note = $1 WHERE surah = $2 AND ayah = $3',
     [note.trim() || null, surah, ayah]);
 }
 
 /** §7.2: "last position saved continuously and restored on launch". */
 export async function saveReadingState(s: Omit<ReadingState, 'updated_at'>) {
   await execContent(
-    `INSERT INTO reading_state (id, surah, ayah, page, mode, updated_at)
+    `INSERT INTO user.reading_state (id, surah, ayah, page, mode, updated_at)
      VALUES (1, $1, $2, $3, $4, $5)
      ON CONFLICT(id) DO UPDATE SET
        surah = excluded.surah, ayah = excluded.ayah, page = excluded.page,
@@ -194,4 +194,4 @@ export async function saveReadingState(s: Omit<ReadingState, 'updated_at'>) {
 }
 
 export const readingState = async (): Promise<ReadingState | null> =>
-  (await query<ReadingState>('SELECT surah, ayah, page, mode, updated_at FROM reading_state WHERE id = 1'))[0] ?? null;
+  (await query<ReadingState>('SELECT surah, ayah, page, mode, updated_at FROM user.reading_state WHERE id = 1'))[0] ?? null;

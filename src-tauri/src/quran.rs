@@ -1,123 +1,142 @@
-//! Bundled Quran database plumbing (Claude.md §4.2, §8.8).
+//! Bundled content database plumbing (Claude.md §4.2, §4.3, §8.8).
 //!
-//! The database is built at build time by `scripts/build-quran-db.py` and shipped
-//! as a Tauri resource. §8.8 puts the app's database at
-//! `~/.local/share/al-minabr/al-minabr.db`, so on first run the read-only resource
-//! is copied there - after which it is writable, which is what bookmarks and
-//! reading state need.
+//! **The shipped content and the user's own data live in separate files**, and
+//! that separation is the whole point of this module.
 //!
-//! Queries themselves live on the frontend through `tauri-plugin-sql`, as §3
-//! specifies. This module only owns the file's existence and identity.
+//! §8.8 names a single `~/.local/share/al-minabr/al-minabr.db`, and the first
+//! implementation copied the bundled database there once and never again. Adding
+//! the athkar tables in a later phase therefore changed nothing for anyone who had
+//! already run the app: the installed copy still held only the Quran, and the
+//! athkar screens came up empty with no error anywhere. That was not a one-off —
+//! it would have recurred on every future correction to the shipped text.
+//!
+//! So `content.db` holds everything the app ships and is replaced wholesale
+//! whenever the bundled stamp differs, while `al-minabr.db` keeps its §8.8 name and
+//! holds only what the user made: bookmarks, reading position, athkar progress.
+//! The frontend opens the content file and attaches the user file to it.
 
 use serde::Serialize;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
-pub const DB_FILE: &str = "al-minabr.db";
-const RESOURCE: &str = "resources/quran.db";
+/// §8.8's path, now holding user data only.
+pub const USER_DB: &str = "al-minabr.db";
+/// The shipped content, replaced whenever the bundle changes.
+pub const CONTENT_DB: &str = "content.db";
+const STAMP_FILE: &str = "content.version";
 
-/// Bumped when `build-quran-db.py` changes shape. A database copied by an older
-/// version is replaced rather than migrated: it holds no user data of its own
-/// until bookmarks land in it, and those live in their own tables which are
-/// carried across.
-const SCHEMA_VERSION: i64 = 1;
+const RESOURCE_DB: &str = "resources/quran.db";
+const RESOURCE_STAMP: &str = "resources/content.version";
 
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseInfo {
-    /// Absolute path, so the frontend can hand it to tauri-plugin-sql.
+    /// Absolute path to the shipped content, for the frontend to open.
     pub path: String,
-    /// False when the bundled resource is missing - the reader then explains
+    /// Absolute path to the user's own data, attached to the above.
+    pub user_path: String,
+    /// False when the bundled resource is missing — the reader then explains
     /// itself instead of failing with a SQL error.
     pub available: bool,
-    pub schema_version: i64,
+    /// Stamp of the installed content, for diagnostics.
+    pub version: String,
+    /// True when this launch replaced a stale copy, so the frontend can drop the
+    /// content tables an older build left inside the user file.
+    pub refreshed: bool,
 }
 
-pub fn database_path() -> PathBuf {
-    crate::settings::data_dir().join(DB_FILE)
+pub fn data_dir() -> PathBuf {
+    crate::settings::data_dir()
 }
 
-/// Copies the bundled database into the data directory if it is not already
-/// there. Returns where it ended up.
+pub fn content_path() -> PathBuf {
+    data_dir().join(CONTENT_DB)
+}
+
+pub fn user_path() -> PathBuf {
+    data_dir().join(USER_DB)
+}
+
+fn read_stamp(path: &std::path::Path) -> Option<String> {
+    std::fs::read_to_string(path).ok().map(|s| s.trim().to_string())
+}
+
+/// Installs the bundled content, replacing an out-of-date copy.
 pub fn ensure(app: &AppHandle) -> Result<DatabaseInfo, String> {
-    let target = database_path();
-    let path = target.to_string_lossy().to_string();
+    let target = content_path();
+    let installed_stamp_path = data_dir().join(STAMP_FILE);
+    let info = |available, version, refreshed| DatabaseInfo {
+        path: target.to_string_lossy().to_string(),
+        user_path: user_path().to_string_lossy().to_string(),
+        available,
+        version,
+        refreshed,
+    };
 
-    if target.is_file() {
-        return Ok(DatabaseInfo { path, available: true, schema_version: SCHEMA_VERSION });
-    }
+    let resolve = |rel: &str| {
+        app.path()
+            .resolve(rel, tauri::path::BaseDirectory::Resource)
+            .map_err(|e| format!("could not resolve {rel}: {e}"))
+    };
 
-    let source = app
-        .path()
-        .resolve(RESOURCE, tauri::path::BaseDirectory::Resource)
-        .map_err(|e| format!("could not resolve the bundled database: {e}"))?;
-
+    let source = resolve(RESOURCE_DB)?;
     if !source.is_file() {
-        // Not fatal: prayer times, athkar and the panel do not need it. §4.2's
-        // reader explains the absence rather than the app failing outright.
-        return Ok(DatabaseInfo { path, available: false, schema_version: SCHEMA_VERSION });
+        // Not fatal: prayer times, qibla, the calendar and the panel do not need
+        // it, and the screens that do explain the absence rather than failing.
+        return Ok(info(target.is_file(), String::new(), false));
     }
 
-    if let Some(dir) = target.parent() {
-        std::fs::create_dir_all(dir).map_err(|e| format!("could not create {}: {e}", dir.display()))?;
+    let bundled_stamp = resolve(RESOURCE_STAMP).ok().and_then(|p| read_stamp(&p));
+    let installed_stamp = read_stamp(&installed_stamp_path);
+
+    // Replace when the file is missing, or when the bundle carries different
+    // content. A bundle with no stamp is treated as "unknown", and only installed
+    // if nothing is there — so a missing stamp can never clobber a good copy.
+    let needs_install = !target.is_file()
+        || match (&bundled_stamp, &installed_stamp) {
+            (Some(b), Some(i)) => b != i,
+            (Some(_), None) => true,
+            _ => false,
+        };
+
+    if !needs_install {
+        return Ok(info(true, installed_stamp.unwrap_or_default(), false));
     }
-    // Copy to a temporary name first, so an interrupted first run cannot leave a
-    // half-written database that later launches would treat as complete.
+
+    std::fs::create_dir_all(data_dir())
+        .map_err(|e| format!("could not create {}: {e}", data_dir().display()))?;
+    // Copy to a temporary name and rename, so an interrupted install cannot leave
+    // a half-written database that the next launch would treat as complete.
     let tmp = target.with_extension("db.partial");
     std::fs::copy(&source, &tmp).map_err(|e| format!("could not copy the database: {e}"))?;
     std::fs::rename(&tmp, &target).map_err(|e| format!("could not install the database: {e}"))?;
 
-    Ok(DatabaseInfo { path, available: true, schema_version: SCHEMA_VERSION })
+    let stamp = bundled_stamp.unwrap_or_default();
+    if !stamp.is_empty() {
+        // Written only after the database is in place: if the copy fails, the old
+        // stamp stays and the next launch tries again.
+        let _ = std::fs::write(&installed_stamp_path, format!("{stamp}\n"));
+    }
+    Ok(info(true, stamp, true))
 }
-
-/// Tables the app writes to, created alongside the bundled read-only content.
-/// Kept here rather than in the build script because they belong to the user, not
-/// to the shipped data - a database rebuilt from new source text must not drop them.
-pub const USER_SCHEMA: &str = "
-CREATE TABLE IF NOT EXISTS bookmarks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    surah INTEGER NOT NULL,
-    ayah INTEGER NOT NULL,
-    note TEXT,
-    created_at INTEGER NOT NULL,
-    UNIQUE (surah, ayah)
-);
-CREATE TABLE IF NOT EXISTS reading_state (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    surah INTEGER NOT NULL,
-    ayah INTEGER NOT NULL,
-    page INTEGER NOT NULL,
-    mode TEXT NOT NULL,
-    updated_at INTEGER NOT NULL
-);
-";
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn the_database_lives_where_8_8_says() {
-        let p = database_path();
+    fn the_user_database_keeps_the_name_8_8_specifies() {
+        let p = user_path();
         assert!(p.ends_with("al-minabr.db"), "path was {}", p.display());
-        assert!(
-            p.parent().is_some_and(|d| d.ends_with("al-minabr")),
-            "expected the XDG data dir, got {}",
-            p.display()
-        );
+        assert!(p.parent().is_some_and(|d| d.ends_with("al-minabr")));
     }
 
     #[test]
-    fn the_user_schema_is_idempotent_and_separate() {
-        // It must be safe to run on every launch, and must not touch the tables
-        // the build script owns.
-        assert!(USER_SCHEMA.contains("IF NOT EXISTS"), "user tables must be create-if-missing");
-        assert!(!USER_SCHEMA.contains("DROP"), "the user schema must never drop anything");
-        for shipped in ["verses", "surahs", "translations", "tafsirs", "mushaf_lines"] {
-            assert!(
-                !USER_SCHEMA.contains(&format!("CREATE TABLE IF NOT EXISTS {shipped}")),
-                "the user schema must not redefine the shipped table {shipped}"
-            );
-        }
+    fn content_sits_beside_it_in_the_same_directory() {
+        assert_eq!(content_path().parent(), user_path().parent());
+        assert!(content_path().ends_with("content.db"));
+        // They must be different files: the whole point is that one can be
+        // replaced without touching the other.
+        assert_ne!(content_path(), user_path());
     }
 }

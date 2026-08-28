@@ -212,21 +212,25 @@ export default function Quran({ arabicIndic }: { arabicIndic: boolean }) {
   return (
     <div className="quran">
       <header className="quran-bar">
-        {!browsing && (
-          <IconButton label="All surahs" onClick={() => { setSurah(null); setMode('reading'); setQuery(''); }}>
-            <ArrowLeft size={17} strokeWidth={1.5} />
-          </IconButton>
-        )}
-        {current && (
+        {/* Always present so the grid areas line up whether or not it is shown. */}
+        <span className="quran-bar-back">
+          {!browsing && (
+            <IconButton label={t('quran.allSurahs')}
+              onClick={() => { setSurah(null); setMode('reading'); setQuery(''); }}>
+              <ArrowLeft size={17} strokeWidth={1.5} />
+            </IconButton>
+          )}
+        </span>
+        {current ? (
           <span className="quran-bar-title">
             <span className="quran-bar-name" lang="ar" dir="rtl">{current.name_ar}</span>
             <span className="quran-bar-sub">{current.name_transliterated}</span>
           </span>
-        )}
-        <span className="spacer" />
+        ) : <span className="quran-bar-title" />}
         <div className="quran-bar-search">
           <SearchField value={query} onChange={setQuery} placeholder={t('quran.search')} />
         </div>
+        <span className="quran-bar-mode">
         <SegmentedControl
           options={[
             { value: 'reading' as const, label: t('quran.reading') },
@@ -238,6 +242,7 @@ export default function Quran({ arabicIndic }: { arabicIndic: boolean }) {
             setMode(m);
           }}
         />
+        </span>
       </header>
 
       <div className="quran-body">

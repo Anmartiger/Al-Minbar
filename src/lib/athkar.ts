@@ -68,7 +68,7 @@ export type Progress = Record<number, number>;
 
 export async function loadProgress(categoryId: number, session: Session): Promise<Progress> {
   const rows = await queryContent<{ dhikr_row_id: number; count: number }>(
-    `SELECT dhikr_row_id, count FROM athkar_progress
+    `SELECT dhikr_row_id, count FROM user.athkar_progress
       WHERE category_id = $1 AND session = $2 AND day = $3`,
     [categoryId, session, today()]);
   return Object.fromEntries(rows.map(r => [r.dhikr_row_id, r.count]));
@@ -78,7 +78,7 @@ export async function saveCount(
   categoryId: number, session: Session, dhikrRowId: number, count: number,
 ) {
   await execContent(
-    `INSERT INTO athkar_progress (category_id, session, day, dhikr_row_id, count)
+    `INSERT INTO user.athkar_progress (category_id, session, day, dhikr_row_id, count)
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT(category_id, session, day, dhikr_row_id)
      DO UPDATE SET count = excluded.count`,
@@ -87,7 +87,7 @@ export async function saveCount(
 
 export async function resetCategory(categoryId: number, session: Session) {
   await execContent(
-    'DELETE FROM athkar_progress WHERE category_id = $1 AND session = $2 AND day = $3',
+    'DELETE FROM user.athkar_progress WHERE category_id = $1 AND session = $2 AND day = $3',
     [categoryId, session, today()]);
 }
 

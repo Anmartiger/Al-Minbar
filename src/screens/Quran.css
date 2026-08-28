@@ -4,30 +4,51 @@
 
 /* ------------------------------- toolbar -------------------------------- */
 
+/* Two rows rather than one that wraps unpredictably: identity on top, controls
+   beneath. A single row meant the search, the mode switch and a long surah name
+   competed for the same space, and in a narrow window the loser was pushed off
+   the edge — which is what clipped the reader. */
 .quran-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "back title mode" "search search search";
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
   padding: var(--space-3) var(--space-5);
   border-block-end: 1px solid var(--hairline);
   flex: 0 0 auto;
-  /* §10: "No horizontal scrollbar at the minimum window size." The toolbar used
-     a fixed-width search and could not shrink, so it pushed the reader sideways
-     in a narrow window. It wraps now, and the search gives way first. */
-  flex-wrap: wrap;
   min-inline-size: 0;
 }
-.quran-bar-search { flex: 1 1 180px; min-inline-size: 120px; max-inline-size: 280px; }
-.quran-bar-title { display: flex; align-items: baseline; gap: var(--space-2); min-inline-size: 0; }
+/* Wide enough and it collapses back to one row, search in the middle. */
+@media (min-width: 720px) {
+  .quran-bar {
+    grid-template-columns: auto auto 1fr auto;
+    grid-template-areas: "back title search mode";
+    gap: var(--space-4);
+  }
+}
+
+.quran-bar-back { grid-area: back; }
+.quran-bar-title {
+  grid-area: title;
+  display: flex; align-items: baseline; gap: var(--space-2);
+  min-inline-size: 0; overflow: hidden;
+}
 .quran-bar-name {
   font-family: var(--font-arabic);
   font-size: var(--text-title2);
   line-height: var(--lh-arabic-ui);
   letter-spacing: normal;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.quran-bar-sub { font-size: var(--text-caption); color: var(--text-2); white-space: nowrap; }
-.quran-bar .spacer { flex: 1 1 0; min-inline-size: 0; }
+.quran-bar-sub {
+  font-size: var(--text-caption); color: var(--text-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.quran-bar-search { grid-area: search; min-inline-size: 0; }
+.quran-bar-mode { grid-area: mode; justify-self: end; }
 
 .quran-body { flex: 1; min-height: 0; display: flex; }
 .quran-scroll {
