@@ -12,11 +12,16 @@
   "app": {
     "withGlobalTauri": false,
     "windows": [],
-    "security": { "csp": null }
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "appimage"],
+    "targets": [
+      "deb",
+      "appimage"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -27,7 +32,10 @@
     "shortDescription": "Prayer times, Quran, athkar and qibla",
     "longDescription": "Accurate offline prayer times with adhan and desktop notifications, the full Uthmani Quran with recitation, athkar with tap counters, qibla bearing and a Hijri calendar.",
     "linux": {
-      "deb": { "depends": [] }
+      "deb": {
+        "depends": [],
+        "desktopTemplate": "al-minabr.desktop"
+      }
     }
   }
 }

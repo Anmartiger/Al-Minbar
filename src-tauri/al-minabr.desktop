@@ -1,0 +1,33 @@
+[Desktop Entry]
+Type=Application
+Name={{name}}
+Comment={{comment}}
+Exec={{exec}} %U
+Icon={{icon}}
+Terminal=false
+Categories={{categories}}
+Keywords=prayer;salah;salat;athan;adhan;quran;qibla;hijri;islam;muslim;
+{{#if mime_type}}MimeType={{mime_type}}
+{{/if}}
+# §8.4: "The .desktop file's StartupWMClass must match the window's WM class so the
+# window groups under the correct dock/taskbar icon instead of appearing as an
+# unnamed second entry."
+StartupWMClass=al-minabr
+StartupNotify=true
+SingleMainWindow=true
+
+# §8.4: "a right-click on the dock icon offers 'Open Quran', 'Today's timetable'
+# and 'Settings' directly."
+Actions=Quran;Timetable;Settings;
+
+[Desktop Action Quran]
+Name=Open Quran
+Exec={{exec}} --quran
+
+[Desktop Action Timetable]
+Name=Today's timetable
+Exec={{exec}} --toggle
+
+[Desktop Action Settings]
+Name=Settings
+Exec={{exec}} --settings

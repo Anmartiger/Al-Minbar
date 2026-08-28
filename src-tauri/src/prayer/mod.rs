@@ -133,7 +133,7 @@ impl PrayerName {
     }
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug, PartialEq)]
 pub struct PrayerTime {
     pub name: &'static str,
     /// Unix seconds. The frontend counts down against this and needs no date library.
@@ -145,7 +145,7 @@ pub struct PrayerTime {
     pub is_prayer: bool,
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug, PartialEq)]
 pub struct DayTimes {
     pub date: String,
     pub hijri: hijri::HijriDate,
@@ -218,11 +218,16 @@ pub fn window(today: NaiveDate, loc: &Location, settings: &Settings) -> Result<V
     Ok(out)
 }
 
-/// Today's date in the location's timezone - not the machine's. A user whose
-/// laptop clock is in another zone still gets their own local day.
-pub fn today_in(loc: &Location) -> Result<NaiveDate, String> {
+/// The local calendar date at `instant`, in the location's timezone - not the
+/// machine's. A user whose laptop clock is in another zone still gets their own day.
+pub fn local_date_at(loc: &Location, instant: chrono::DateTime<chrono::Utc>) -> Result<NaiveDate, String> {
     let tz = parse_tz(&loc.timezone)?;
-    Ok(chrono::Utc::now().with_timezone(&tz).date_naive())
+    Ok(instant.with_timezone(&tz).date_naive())
+}
+
+/// Today's date in the location's timezone.
+pub fn today_in(loc: &Location) -> Result<NaiveDate, String> {
+    local_date_at(loc, chrono::Utc::now())
 }
 
 /// §7.4: bearing to the Kaaba from true north, in degrees.
