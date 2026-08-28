@@ -111,7 +111,29 @@ function render(size) {
 }
 
 mkdirSync('src-tauri/icons', { recursive: true });
-for (const [name, size] of [['32x32', 32], ['128x128', 128], ['128x128@2x', 256], ['icon', 512]]) {
+
+// Tauri's own set, plus the hicolor sizes a .deb installs into
+// /usr/share/icons/hicolor so docks and app grids find one at their own scale.
+const SIZES = [
+  ['32x32', 32], ['128x128', 128], ['128x128@2x', 256], ['icon', 512],
+  ['16x16', 16], ['48x48', 48], ['64x64', 64], ['256x256', 256],
+];
+for (const [name, size] of SIZES) {
   writeFileSync(`src-tauri/icons/${name}.png`, png(size, render(size)));
-  console.log(`icons/${name}.png  ${size}x${size}`);
+}
+console.log(`icons: ${SIZES.map(([n]) => n).join(', ')}`);
+
+// A monochrome variant for panels that ask for a symbolic icon (§8.2).
+{
+  const size = 22;
+  const rgba = render(size);
+  for (let i = 0; i < rgba.length; i += 4) {
+    if (!rgba[i + 3]) continue;
+    // Luminance-weighted, so the knocked-out minbar stays legible as a hole.
+    const l = 0.2126 * rgba[i] + 0.7152 * rgba[i + 1] + 0.0722 * rgba[i + 2];
+    rgba[i] = rgba[i + 1] = rgba[i + 2] = 0x8a;
+    rgba[i + 3] = Math.round(rgba[i + 3] * (1 - l / 255));
+  }
+  writeFileSync('src-tauri/icons/symbolic-22.png', png(size, rgba));
+  console.log('icons: symbolic-22');
 }
