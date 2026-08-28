@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Bell, BellOff, BookOpen, ChevronLeft, Compass, MapPin, Sunrise, Sunset, X } from 'lucide-react';
 import {
-  Badge, Card, EmptyState, IconButton, List, ListRow, ProgressRing,
+  EmptyState, IconButton, List, ListRow, ProgressRing,
   SearchField, Sheet, Skeleton,
 } from '../components/ui';
 import { getStatus, type StatusView } from '../lib/status';
@@ -14,17 +14,40 @@ import {
 } from '../lib/prayer';
 import './Home.css';
 
-/** §7.1's dawn → day → dusk → night wash. Kept at low alpha so it can never
- *  undercut the contrast the §6.3 tokens guarantee. */
-function skyFor(nowEpoch: number, sunrise?: PrayerTime, sunset?: PrayerTime) {
-  if (!sunrise || !sunset) return { top: 'transparent', strength: '0%' };
-  const hourBefore = sunrise.epoch - 3600;
-  const hourAfter = sunset.epoch + 3600;
-  if (nowEpoch < hourBefore) return { top: '#3B4A7A', strength: '9%' };   // night
-  if (nowEpoch < sunrise.epoch + 1800) return { top: '#E8A06A', strength: '10%' }; // dawn
-  if (nowEpoch < sunset.epoch - 3600) return { top: '#69A7D8', strength: '7%' };   // day
-  if (nowEpoch < hourAfter) return { top: '#D97A5A', strength: '10%' };   // dusk
-  return { top: '#3B4A7A', strength: '9%' };                             // night
+/**
+ * §7.1's dawn → day → dusk → night wash, driven by the day's own solar events
+ * rather than clock hours — which is the point: prayer times are derived from
+ * solar position, so the ground tracks the same thing they do.
+ *
+ * Two stops, because a real sky has a horizon. Strength stays low enough that the
+ * §6.3 contrast guarantees are untouched; it is a wash over --bg, never a
+ * replacement for it.
+ */
+function skyFor(now: number, sunrise?: PrayerTime, sunset?: PrayerTime) {
+  if (!sunrise || !sunset) return { a: 'transparent', b: 'transparent', strength: '0%' };
+  const H = 3600;
+  const phases: Array<[boolean, string, string, string]> = [
+    [now < sunrise.epoch - H,       '#2E3F6B', '#141C33', '16%'], // night
+    [now < sunrise.epoch,           '#C9647A', '#E8A06A', '20%'], // first light
+    [now < sunrise.epoch + H,       '#E8A06A', '#F0C88A', '18%'], // sunrise
+    [now < sunset.epoch - 2.5 * H,  '#7FB2DC', '#CFE3F2', '13%'], // day
+    [now < sunset.epoch - H,        '#E0B878', '#F2DCB0', '15%'], // late afternoon
+    [now < sunset.epoch,            '#D9614A', '#E8A06A', '20%'], // maghrib
+    [now < sunset.epoch + H,        '#8E4C6B', '#3E3560', '19%'], // dusk
+  ];
+  const hit = phases.find(([test]) => test);
+  const [, a, b, strength] = hit ?? [true, '#2E3F6B', '#141C33', '16%'];
+  return { a, b, strength };
+}
+
+/** An eight-pointed rosette, the mark the printed mushaf uses for a position. */
+function Rosette() {
+  return (
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden>
+      <path d="M16 3 19.5 7.2 24.8 7.2 24.8 12.5 29 16 24.8 19.5 24.8 24.8 19.5 24.8 16 29 12.5 24.8 7.2 24.8 7.2 19.5 3 16 7.2 12.5 7.2 7.2 12.5 7.2Z"
+        stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 type Props = { arabicIndic: boolean; onOpenQibla?: () => void; onOpenQuran?: () => void };
@@ -120,7 +143,9 @@ export default function Home({ arabicIndic, onOpenQibla, onOpenQuran }: Props) {
   const sunset = todayTimes.find(t => t.name === 'maghrib');
   const sky = skyFor(nowEpoch, sunrise, sunset);
 
-  const skyStyle = { '--sky-top': sky.top, '--sky-strength': sky.strength } as React.CSSProperties;
+  const skyStyle = {
+    '--sky-a': sky.a, '--sky-b': sky.b, '--sky-strength': sky.strength,
+  } as React.CSSProperties;
 
   if (error) {
     return (
@@ -161,7 +186,7 @@ export default function Home({ arabicIndic, onOpenQibla, onOpenQuran }: Props) {
       <div className="home-sky" aria-hidden />
 
       {trayMissing && !trayNoticeDismissed && (
-        <Card className="tray-notice">
+        <div className="tray-notice">
           <div className="tray-notice-head">
             <strong>No panel tray on this desktop</strong>
             <IconButton label="Dismiss" onClick={() => setTrayNoticeDismissed(true)}>
@@ -177,11 +202,12 @@ export default function Home({ arabicIndic, onOpenQibla, onOpenQuran }: Props) {
             On GNOME, install the AppIndicator extension, then log out and back in:
           </p>
           <code>sudo apt install gnome-shell-extension-appindicator</code>
-        </Card>
+        </div>
       )}
 
       <header className="home-header">
         <div>
+          <div className="home-eyebrow">Today</div>
           <div className="home-hijri" lang="ar" dir="rtl">
             {toDigits(today.hijri.day, arabicIndic)} {today.hijri_month_ar}{' '}
             {toDigits(today.hijri.year, arabicIndic)}
@@ -209,13 +235,13 @@ export default function Home({ arabicIndic, onOpenQibla, onOpenQuran }: Props) {
           </div>
         </div>
         <div className="hero-side">
-          <span className="hero-label">Time remaining</span>
+          <span className="hero-label">Until {nextLabel.latin}</span>
           <span className={`hero-countdown${arabicIndic ? ' arabic-indic' : ''}`}
             role="timer" aria-live="off">
             {formatCountdown(remaining, arabicIndic)}
           </span>
           <span className="hero-time">
-            {nextLabel.latin} at {toDigits(segment.next.clock, arabicIndic)}
+            at {toDigits(segment.next.clock, arabicIndic)}
           </span>
         </div>
       </section>
@@ -235,58 +261,61 @@ export default function Home({ arabicIndic, onOpenQibla, onOpenQuran }: Props) {
         </button>
       )}
 
-      <div className="home-list">
-        <List>
+      <section className="timetable frame">
+        <div className="band">
+          <span className="band-rule" />
+          <span>Today&rsquo;s timetable</span>
+          <span className="band-rule" />
+        </div>
+        <div className="timetable-rows">
           {todayTimes.map(t => {
             const label = PRAYER_LABELS[t.name];
             const isCurrent = current?.name === t.name && current?.epoch === t.epoch;
             const passed = t.epoch <= nowEpoch && !isCurrent;
             return (
-              <ListRow
-                key={t.name}
-                tinted={isCurrent}
-                className={passed ? 'prayer-row-passed' : ''}
-                title={<span className="prayer-row-name" lang="ar" dir="rtl">{label.ar}</span>}
-                subtitle={<span className="prayer-row-latin">{label.latin}</span>}
-                trailing={
-                  <>
-                    <span className="prayer-row-time">{toDigits(t.clock, arabicIndic)}</span>
-                    {t.is_prayer ? (
-                      <IconButton
-                        label={`${muted[t.name] ? 'Enable' : 'Mute'} the ${label.latin} notification`}
-                        onClick={() => setMuted(m => ({ ...m, [t.name]: !m[t.name] }))}
-                      >
-                        {muted[t.name]
-                          ? <BellOff size={16} strokeWidth={1.5} />
-                          : <Bell size={16} strokeWidth={1.5} />}
-                      </IconButton>
-                    ) : (
-                      <Badge tone="outline">not a prayer</Badge>
-                    )}
-                  </>
-                }
-                separatorInset="var(--space-4)"
-              />
+              <div className="prayer-row" key={t.name}
+                data-current={isCurrent} data-passed={passed}>
+                <span className="prayer-mark" aria-hidden>
+                  <Rosette />
+                  <span className="prayer-mark-dot" />
+                </span>
+                <span>
+                  <span className="prayer-name" lang="ar" dir="rtl">{label.ar}</span>
+                  <br />
+                  <span className="prayer-latin">{label.latin}</span>
+                </span>
+                <span className="prayer-time">{toDigits(t.clock, arabicIndic)}</span>
+                {t.is_prayer ? (
+                  <IconButton
+                    label={`${muted[t.name] ? 'Enable' : 'Mute'} the ${label.latin} notification`}
+                    onClick={() => setMuted(m => ({ ...m, [t.name]: !m[t.name] }))}
+                  >
+                    {muted[t.name]
+                      ? <BellOff size={15} strokeWidth={1.5} />
+                      : <Bell size={15} strokeWidth={1.5} />}
+                  </IconButton>
+                ) : <span style={{ inlineSize: 34 }} />}
+              </div>
             );
           })}
-        </List>
-      </div>
+        </div>
+      </section>
 
       <footer className="home-footer">
         {sunrise && (
-          <span className="home-chip">
+          <span className="home-stat">
             <Sunrise size={14} strokeWidth={1.5} />
             Sunrise {toDigits(sunrise.clock, arabicIndic)}
           </span>
         )}
         {sunset && (
-          <span className="home-chip">
+          <span className="home-stat">
             <Sunset size={14} strokeWidth={1.5} />
             Sunset {toDigits(sunset.clock, arabicIndic)}
           </span>
         )}
         {qiblaInfo && (
-          <button className="home-chip" data-interactive="true" onClick={onOpenQibla}>
+          <button className="home-stat" data-interactive="true" onClick={onOpenQibla}>
             <Compass size={14} strokeWidth={1.5} />
             Qibla {toDigits(qiblaInfo.bearing.toFixed(1), arabicIndic)}° ·{' '}
             {toDigits(Math.round(qiblaInfo.distanceKm).toLocaleString('en-US'), arabicIndic)} km

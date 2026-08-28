@@ -480,3 +480,40 @@
 }
 .empty-title { font-size: var(--text-headline); font-weight: var(--weight-headline); color: var(--text); }
 .empty-body { font-size: var(--text-callout); max-inline-size: 42ch; }
+
+/* ============================== Frame ================================== */
+/* The mushaf's doubled rule. Used for content that is genuinely a bounded
+   artifact — the day's timetable, a mushaf page — rather than for every box.
+   A frame says "this is a complete thing"; a card says "this floats". */
+
+.frame {
+  position: relative;
+  border: var(--rule) solid var(--rule-colour);
+  border-radius: var(--frame-radius);
+  background: var(--surface);
+}
+.frame::before {
+  content: '';
+  position: absolute;
+  inset: var(--frame-gap);
+  border: var(--rule) solid var(--rule-quiet);
+  border-radius: calc(var(--frame-radius) - var(--frame-gap));
+  pointer-events: none;
+}
+.frame-flush { background: transparent; }
+
+/* The band that carries a surah name in print, and a section heading here. */
+.band {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5);
+  border-block-end: var(--rule) solid var(--rule-colour);
+  color: var(--accent);
+  font-size: var(--text-micro);
+  font-weight: var(--weight-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.band-rule { flex: 1; block-size: var(--rule); background: var(--rule-colour); }

@@ -64,7 +64,9 @@
   --shadow-lg: 0 12px 32px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.05);
   /* Frameless Wayland windows get no server-side shadow (§6.7) - we draw our own
      into the transparent margin. */
-  --shadow-window: 0 18px 50px rgba(0,0,0,.22), 0 4px 14px rgba(0,0,0,.14);
+  /* Must fit inside --window-margin: blur + |offset| <= margin, or the shadow is
+     clipped at the window edge and reads as a hard dark border. */
+  --shadow-window: 0 8px 24px rgba(0,0,0,.16), 0 2px 6px rgba(0,0,0,.10);
 
   /* ---- Motion §6.5 ---------------------------------------------------- */
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
@@ -110,9 +112,28 @@
   --window-blur: 30px;
   --window-saturate: 180%;
 
+  /* ---- Page structure -------------------------------------------------
+     Borrowed from the printed mushaf, where a ruled frame, a surah band and
+     rosette marks are the page's information architecture rather than ornament.
+     Bounded, durable content sits in a frame; only transient things (sheets,
+     popovers, toasts) float on shadow. */
+  --rule: 1px;
+  --rule-colour: color-mix(in srgb, var(--accent) 26%, transparent);
+  --rule-quiet: color-mix(in srgb, var(--text-2) 22%, transparent);
+  --frame-gap: 3px;          /* the space between the doubled rules */
+  --frame-radius: var(--radius-sm);
+
+  /* ---- The day's light (§7.1) -----------------------------------------
+     The signature. Prayer times are derived from solar position, so the app's
+     ground genuinely tracks it. Strength stays low enough that text contrast is
+     never touched - verified by scripts/check-contrast.mjs. */
+  --sky-a: transparent;
+  --sky-b: transparent;
+  --sky-strength: 0%;
+
   /* ---- Window chrome §6.7 --------------------------------------------- */
   --titlebar-height: 44px;
-  --window-margin: 24px;  /* transparent padding the drop shadow lives in */
+  --window-margin: 32px;  /* transparent padding the drop shadow lives in */
   --resize-hit: 8px;
 }
 
@@ -160,7 +181,7 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,.20);
   --shadow-md: 0 2px 6px rgba(0,0,0,.28);
   --shadow-lg: 0 6px 18px rgba(0,0,0,.36);
-  --shadow-window: 0 18px 50px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.40);
+  --shadow-window: 0 8px 24px rgba(0,0,0,.42), 0 2px 6px rgba(0,0,0,.30);
 }
 
 /* Accent selection - one alias, six sources. */

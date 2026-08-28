@@ -19,7 +19,7 @@ const MIN_CONTENT_W: f64 = 900.0;
 const MIN_CONTENT_H: f64 = 640.0;
 /// §6.7: "Leave ~24px of transparent padding for it and account for that in the
 /// window size." Only where we can actually be transparent.
-const SHADOW_MARGIN: f64 = 24.0;
+const SHADOW_MARGIN: f64 = 32.0;
 
 /// §8.3: "~360×440".
 const MINI_W: f64 = 360.0;

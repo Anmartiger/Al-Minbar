@@ -1,55 +1,69 @@
-/* §7.1 — the screen the app opens to, and the one that must be gorgeous. */
+/* §7.1 — the screen the app opens to.
+   Direction: structure borrowed from the printed mushaf (ruled frames, bands,
+   rosettes), signature from the day's light. Prayer times are derived from solar
+   position, so the ground genuinely tracks it. */
 
 .home {
   position: relative;
   min-block-size: 100%;
-  padding: var(--space-6) var(--space-8) var(--space-8);
-  max-inline-size: 860px;
+  padding: var(--space-7) var(--space-8) var(--space-9);
+  max-inline-size: 880px;
   margin-inline: auto;
 }
 
+/* ------------------------------ the sky --------------------------------- */
+
 /* §7.1: "a very subtle vertical gradient that shifts with the time of day
    (dawn → day → dusk → night), at low enough saturation that text contrast never
-   drops." It is painted as a low-alpha wash *over* --bg rather than replacing it,
-   so the text/background contrast the tokens guarantee cannot be undercut - the
-   most it can shift any channel is the alpha below. */
+   drops." Painted as a wash *over* --bg, never replacing it, so the contrast the
+   §6.3 tokens guarantee cannot be undercut — the most any channel can move is the
+   alpha below. Two stops rather than one: real skies have a horizon. */
 .home-sky {
-  position: absolute;
+  position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--sky-top) var(--sky-strength), transparent) 0%,
-    transparent 62%
-  );
-  transition: background var(--duration-view) var(--ease);
+  background:
+    radial-gradient(120% 62% at 50% 0%,
+      color-mix(in srgb, var(--sky-a) var(--sky-strength), transparent) 0%,
+      transparent 68%),
+    linear-gradient(to bottom,
+      color-mix(in srgb, var(--sky-b) calc(var(--sky-strength) * 0.55), transparent) 0%,
+      transparent 46%);
+  transition: background 1.2s var(--ease);
 }
+@media (prefers-reduced-motion: reduce) { .home-sky { transition: none; } }
+.home > * { position: relative; z-index: 1; }
 
-.home > *:not(.home-sky) { position: relative; z-index: 1; }
-
-/* ------------------------------- header -------------------------------- */
+/* ------------------------------- header --------------------------------- */
 
 .home-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-5);
-  margin-block-end: var(--space-7);
+  margin-block-end: var(--space-8);
 }
 
 .home-hijri {
   font-family: var(--font-arabic);
-  font-size: var(--text-title1);
-  font-weight: var(--weight-title2);
-  line-height: var(--lh-arabic-ui);
+  font-size: 30px;
+  line-height: 1.5;
   letter-spacing: normal;
+}
+.home-eyebrow {
+  font-size: var(--text-micro);
+  font-weight: var(--weight-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-2);
+  margin-block-end: var(--space-1);
 }
 .home-gregorian {
   font-size: var(--text-caption);
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
-  margin-block-start: 2px;
+  margin-block-start: var(--space-1);
 }
 
 .home-place {
@@ -57,180 +71,206 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-full);
-  border: 1px solid var(--hairline);
-  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: var(--rule) solid var(--rule-colour);
+  background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: var(--text-callout);
+  font-size: var(--text-caption);
   cursor: default;
   white-space: nowrap;
   transition: background var(--duration-micro) var(--ease),
               transform var(--duration-micro) var(--ease);
 }
-.home-place:hover { background: var(--surface-2); }
+.home-place:hover { background: var(--tint); }
 .home-place:active { transform: scale(var(--press-scale)); }
 .home-place svg { color: var(--accent); flex: 0 0 auto; }
 
-/* -------------------------------- hero --------------------------------- */
+/* -------------------------------- hero ---------------------------------- */
 
 .hero {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
-  justify-content: center;
   gap: var(--space-8);
-  padding-block: var(--space-7) var(--space-9);
+  padding-block-end: var(--space-8);
 }
 
-.hero-ring { position: relative; display: grid; place-items: center; flex: 0 0 auto; }
+.hero-ring { position: relative; display: grid; place-items: center; }
 .hero-ring-inner {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
+  position: absolute; display: flex; flex-direction: column;
+  align-items: center; gap: 2px;
 }
 .hero-name {
   font-family: var(--font-quran);
-  font-size: 40px;
-  line-height: 1.35;
+  font-size: 38px;
+  line-height: 1.4;
   letter-spacing: normal;
   color: var(--accent);
 }
 .hero-at {
-  font-size: var(--text-caption);
-  color: var(--text-2);
-  font-variant-numeric: tabular-nums;
+  font-size: var(--text-micro); color: var(--text-2);
+  text-transform: uppercase; letter-spacing: 0.12em;
 }
 
-.hero-side { display: flex; flex-direction: column; gap: var(--space-1); }
+.hero-side { display: flex; flex-direction: column; gap: var(--space-1); min-inline-size: 0; }
 .hero-label {
   font-size: var(--text-micro);
   font-weight: var(--weight-micro);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.16em;
   color: var(--text-2);
 }
+/* The countdown is the largest thing on the screen: it is the answer the app
+   exists to give. Tight tracking and a fixed advance, because the seconds column
+   changes every tick and must not shift the number sideways. */
 .hero-countdown {
-  font-size: 46px;
+  font-size: clamp(44px, 7vw, 64px);
   font-weight: var(--weight-display);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-  /* The seconds column changes every tick; a fixed advance stops the whole
-     number jittering sideways. */
   font-feature-settings: "tnum" 1;
 }
-.hero-countdown.arabic-indic { font-family: var(--font-arabic); letter-spacing: normal; }
-.hero-time { font-size: var(--text-headline); color: var(--text-2); font-variant-numeric: tabular-nums; }
-
-/* ------------------------------ prayer list ---------------------------- */
-
-.home-list { margin-block-end: var(--space-6); }
-
-.prayer-row-name {
+.hero-countdown.arabic-indic {
   font-family: var(--font-arabic);
-  font-size: var(--text-title2);
-  line-height: var(--lh-arabic-ui);
+  letter-spacing: normal;
+  font-size: clamp(38px, 6vw, 56px);
+}
+.hero-time {
+  font-size: var(--text-callout);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  margin-block-start: var(--space-1);
+}
+
+/* ---------------------------- the timetable ----------------------------- */
+/* A framed page rather than a floating card: the day's timetable is a bounded,
+   complete artifact, which is what a frame says and a shadow does not. */
+
+.timetable { margin-block-end: var(--space-6); }
+.timetable-rows { padding: var(--space-2); }
+
+.prayer-row {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr auto auto;
+  align-items: center;
+  gap: var(--space-4);
+  inline-size: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: default;
+  transition: background var(--duration-micro) var(--ease);
+}
+.prayer-row + .prayer-row { box-shadow: 0 -1px 0 var(--separator); }
+.prayer-row:hover { background: var(--fill-quieter); }
+
+/* The open window is marked with a rule and a tint rather than a filled block —
+   the printed page marks position with a rule, and it stays legible over the sky. */
+.prayer-row[data-current='true'] {
+  background: var(--tint);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.prayer-row[data-passed='true'] .prayer-name,
+.prayer-row[data-passed='true'] .prayer-time { color: var(--text-2); }
+
+/* A rosette in the leading column, as the mushaf marks a position. */
+.prayer-mark {
+  position: relative; inline-size: 2.4rem; block-size: 2.4rem;
+  display: grid; place-items: center; color: var(--rule-colour);
+}
+.prayer-row[data-current='true'] .prayer-mark { color: var(--accent); }
+.prayer-mark svg { inline-size: 100%; block-size: 100%; }
+.prayer-mark-dot {
+  position: absolute; inline-size: 5px; block-size: 5px;
+  border-radius: var(--radius-full); background: currentColor; opacity: 0.55;
+}
+.prayer-row[data-current='true'] .prayer-mark-dot { opacity: 1; }
+
+.prayer-name {
+  font-family: var(--font-arabic);
+  font-size: 22px;
+  line-height: 1.5;
   letter-spacing: normal;
 }
-.prayer-row-latin {
-  font-size: var(--text-caption);
+.prayer-latin {
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
   color: var(--text-2);
-  letter-spacing: 0.02em;
 }
-.prayer-row-time {
+.prayer-time {
   font-size: var(--text-headline);
   font-variant-numeric: tabular-nums;
-  min-inline-size: 6ch;
+  letter-spacing: -0.01em;
+  min-inline-size: 5.5ch;
   text-align: end;
 }
-/* §7.1: passed rows dim. §6.3: a missed prayer is never scolded in red. */
-.prayer-row-passed .prayer-row-name,
-.prayer-row-passed .prayer-row-time { color: var(--text-2); }
 
-/* ------------------------------- footer -------------------------------- */
+/* ------------------------------- footer --------------------------------- */
 
 .home-footer {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-  padding-block-start: var(--space-2);
+  display: flex; align-items: center; gap: var(--space-5);
+  flex-wrap: wrap; font-size: var(--text-caption); color: var(--text-2);
 }
-.home-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-full);
-  border: 1px solid var(--hairline);
-  background: var(--surface);
-  color: var(--text-2);
-  font: inherit;
-  font-size: var(--text-caption);
-  font-variant-numeric: tabular-nums;
-  cursor: default;
-  transition: transform var(--duration-micro) var(--ease),
-              background var(--duration-micro) var(--ease);
+.home-stat { display: inline-flex; align-items: center; gap: var(--space-2);
+             font-variant-numeric: tabular-nums; }
+.home-stat svg { color: var(--accent); }
+.home-stat[data-interactive='true'] {
+  border: 0; background: transparent; font: inherit; font-size: var(--text-caption);
+  color: var(--text-2); cursor: default; padding: var(--space-1) 0;
+  transition: color var(--duration-micro) var(--ease);
 }
-.home-chip[data-interactive='true']:hover { background: var(--surface-2); color: var(--text); }
-.home-chip[data-interactive='true']:active { transform: scale(var(--press-scale)); }
-.home-chip svg { color: var(--accent); }
+.home-stat[data-interactive='true']:hover { color: var(--text); }
 
-/* ------------------------------ location sheet ------------------------- */
+/* ---------------------------- continue card ----------------------------- */
+
+.continue-card {
+  display: flex; align-items: center; gap: var(--space-3);
+  inline-size: 100%; padding: var(--space-3) var(--space-4);
+  margin-block-end: var(--space-6);
+  border: var(--rule) solid var(--rule-colour);
+  border-radius: var(--radius-sm);
+  background: transparent; color: var(--text); font: inherit;
+  text-align: start; cursor: default;
+  transition: background var(--duration-micro) var(--ease),
+              transform var(--duration-micro) var(--ease);
+}
+.continue-card:hover { background: var(--tint); }
+.continue-card:active { transform: scale(var(--press-scale)); }
+.continue-icon { display: grid; place-items: center; inline-size: 32px; block-size: 32px;
+                 color: var(--accent); }
+.continue-body { flex: 1; display: flex; flex-direction: column; min-inline-size: 0; }
+.continue-label { font-size: var(--text-micro); text-transform: uppercase;
+                  letter-spacing: 0.14em; color: var(--text-2); }
+.continue-ref { font-size: var(--text-body); font-variant-numeric: tabular-nums; }
+.continue-ref [lang='ar'] { font-family: var(--font-arabic); letter-spacing: normal;
+                            font-size: 19px; }
+.continue-card > svg:last-child { color: var(--text-2); }
+
+/* ---------------------------- location sheet ---------------------------- */
 
 .city-hit { display: flex; align-items: baseline; gap: var(--space-2); }
 .city-hit-ar { font-family: var(--font-arabic); letter-spacing: normal; color: var(--text-2); }
 
-.home-error {
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--hairline);
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: var(--text-callout);
-}
-
 /* §8.2's one-time, dismissible no-tray card. */
-.tray-notice { margin-block-end: var(--space-5); }
-.tray-notice-head {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--space-3); margin-block-end: var(--space-2);
+.tray-notice {
+  margin-block-end: var(--space-6); padding: var(--space-4);
+  border: var(--rule) solid var(--rule-colour); border-radius: var(--radius-sm);
 }
+.tray-notice-head { display: flex; align-items: center; justify-content: space-between;
+                    gap: var(--space-3); margin-block-end: var(--space-2); }
 .tray-notice p { margin: 0 0 var(--space-2); font-size: var(--text-callout); color: var(--text-2); }
-.tray-notice code {
-  display: block; padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm); background: var(--fill-quieter);
-  font-size: var(--text-caption); overflow-x: auto;
-}
+.tray-notice code { display: block; padding: var(--space-2) var(--space-3);
+                    border-radius: var(--radius-xs); background: var(--fill-quieter);
+                    font-size: var(--text-caption); overflow-x: auto; }
 
-/* §7.2's "Continue reading" card, shown only when a reading position exists. */
-.continue-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  inline-size: 100%;
-  padding: var(--space-3) var(--space-4);
-  margin-block-end: var(--space-5);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--hairline);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  color: var(--text);
-  font: inherit;
-  text-align: start;
-  cursor: default;
-  transition: background var(--duration-micro) var(--ease),
-              transform var(--duration-micro) var(--ease);
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .prayer-row { grid-template-columns: 1.8rem 1fr auto; gap: var(--space-3); }
 }
-.continue-card:hover { background: var(--surface-2); }
-.continue-card:active { transform: scale(var(--press-scale)); }
-.continue-icon { display: grid; place-items: center; inline-size: 36px; block-size: 36px;
-                 border-radius: var(--radius-full); background: var(--tint); color: var(--accent); }
-.continue-body { flex: 1; display: flex; flex-direction: column; min-inline-size: 0; }
-.continue-label { font-size: var(--text-micro); text-transform: uppercase;
-                  letter-spacing: 0.06em; color: var(--text-2); }
-.continue-ref { font-size: var(--text-body); font-variant-numeric: tabular-nums; }
-.continue-ref [lang='ar'] { font-family: var(--font-arabic); letter-spacing: normal; }
-.continue-card svg:last-child { color: var(--text-2); }
