@@ -775,3 +775,97 @@ for the same reason it exists at all — below that, tashkeel clips (§2.2).
 database from new sources updates the credits along with them — including the
 Uthmani checksum and the counts. The 14-vs-15 sajda note §4.2 asks for is there,
 alongside the athkar gap from §10.1.
+
+## 13. Phase 7 packaging decisions
+
+### 13.1 One `.deb`, built on 22.04, because glibc only points forward
+
+§11 says to build on the oldest supported distro. That is not a precaution here, it
+is measurable: `objdump -T` on a binary linked on this machine (26.04) reports
+`GLIBC_2.39` as its highest required symbol, and 22.04 ships 2.35. Such a package
+installs and then fails to start.
+
+§11 offers a fallback of two packages split by WebKitGTK version. It is not needed:
+`libwebkit2gtk-4.1-0` exists unchanged from 22.04 through 26.04, so a single 22.04
+build covers every supported release. The release workflow builds inside an
+`ubuntu:22.04` container and fails the job if the resulting binary requires anything
+above `GLIBC_2.35` — a build that escapes the container is caught rather than
+shipped.
+
+Docker is installed on this machine but its socket is not reachable without adding
+the account to the `docker` group, which is a privilege change and not mine to make.
+So the 22.04 build only ever happens in CI, and every `.deb` produced locally is
+26.04-only. That is a property of the build host, not of the packaging.
+
+### 13.2 `Depends` and the icon set are Tauri's to derive, not mine to list
+
+The first configuration spelled out `depends` and mapped each icon size through
+`deb.files`. Both were wrong in the same way — Tauri already derives `Depends` from
+the libraries the binary actually links, so the hand-written list appeared *twice*
+in the control file:
+
+    Depends: libwebkit2gtk-4.1-0, libgtk-3-0, libayatana-appindicator3-1,
+             libayatana-appindicator3-1, libwebkit2gtk-4.1-0, libgtk-3-0
+
+The icons were the reverse mistake: `deb.files` did place 16/48/64/256 into hicolor,
+but only in the `.deb`. Listing them in `bundle.icon` instead deploys the same eight
+sizes to the AppImage as well, from one source of truth.
+
+### 13.3 `productName` names the desktop file, so the display name moved
+
+§8.1 wants `al-minabr.desktop`. The bundler builds that filename with
+`format!("{product_name}.desktop")` and offers no separate setting, so `productName`
+had to become lowercase. The same variable feeds `Name=` in the desktop entry and
+`package_info().name` in Rust, which is what titles the main window — so both now
+carry the capitalised name literally instead. Renaming was safe for everything else:
+the XDG directories come from `ProjectDirs`, not from `productName`.
+
+The entry gained `Name[ar]`, `Comment[ar]`, `Keywords[ar]` and Arabic names for all
+three `Actions` while it was being rewritten. An app whose primary language is
+Arabic should be findable in the app grid by typing `صلاة`. `desktop-file-validate`
+passes on the generated file.
+
+### 13.4 Closing the window destroys it, rather than hiding it
+
+§10 measures background mode as "under 60 MB ... and **no webview process alive**".
+Close-to-tray was calling `window.hide()`, which keeps `WebKitWebProcess` resident.
+Measured, that is around 180 MB RSS for a window nobody is looking at — three times
+the entire budget. The close is now allowed to proceed, so the window is destroyed
+and takes its webview with it; `show_main()` rebuilds it on demand, which is the
+path a first launch already took.
+
+Verified by toggling the mini window against a `/proc` scan: opening it takes the
+webview count 1 → 2, closing it 2 → 1. The count reaches 0 in background mode.
+
+Measured against §10's two figures:
+
+| State | Processes | RSS | PSS | §10 budget |
+|---|---|---|---|---|
+| Hidden, no window ever shown | 1 | 60.2 MB | **33.5 MB** | under 60 MB |
+| Main window open | 3 | — | **187.6 MB** | under 250 MB |
+
+PSS is the honest number for a process tree sharing this much of WebKitGTK; RSS
+counts every shared page against each process holding it.
+
+One caveat the table cannot show: once a window has been opened, the parent keeps
+WebKitGTK mapped even after the window is destroyed, so background mode settles near
+79 MB PSS rather than returning to 33.5. The webview processes are genuinely gone —
+this is the parent's own mappings, and nothing short of re-executing the process
+releases them. §10's 60 MB is met on the path that matters, which is a login where
+no window is ever opened.
+
+### 13.5 What is still the user's to check
+
+- **Screenshots.** GNOME refuses `org.gnome.Shell.Screenshot` to unsandboxed
+  callers, and the tools that go around it want `wlr-screencopy`, which GNOME does
+  not implement. `docs/shots/` lists what is wanted; the captures have to be taken
+  by hand.
+- **`dpkg -i` on clean 22.04 and 26.04 VMs.** Installing a package on this machine
+  needs sudo and modifies the running system, so the local verification stopped at
+  extracting the archive and validating its contents. The CI job installs the `.deb`
+  it just built inside the container and checks `StartupWMClass` and `Actions`
+  survived, which covers the 22.04 half automatically.
+- **`patchelf` must be on `PATH`** for the AppImage's gstreamer plugin. Without it
+  linuxdeploy fails with `failed to run linuxdeploy` and nothing else — the
+  bundler discards the plugin's stderr unless `-v` is passed. The workflow installs
+  it; that error message is the only clue it is missing.
