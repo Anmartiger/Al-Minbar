@@ -1,5 +1,6 @@
 pub mod audio;
 pub mod cities;
+pub mod fonts;
 pub mod prayer;
 pub mod quran;
 pub mod recitation;
@@ -183,6 +184,30 @@ fn hijri_today(adjustment: i64) -> prayer::hijri::HijriDate {
     use chrono::Datelike;
     let now = chrono::Local::now().date_naive();
     prayer::hijri::from_gregorian(now.year(), now.month(), now.day(), adjustment)
+}
+
+/// §5.2's system Arabic fonts, listed after the bundled ones.
+#[tauri::command]
+fn system_fonts() -> fonts::SystemFonts {
+    fonts::system_arabic_fonts()
+}
+
+/// §7.6's Data & storage pane needs somewhere to point.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StoragePaths {
+    config: String,
+    data: String,
+    cache: String,
+}
+
+#[tauri::command]
+fn storage_paths() -> StoragePaths {
+    StoragePaths {
+        config: settings::config_dir().to_string_lossy().to_string(),
+        data: settings::data_dir().to_string_lossy().to_string(),
+        cache: settings::cache_dir().to_string_lossy().to_string(),
+    }
 }
 
 #[tauri::command]
@@ -530,6 +555,8 @@ pub fn run() {
             qibla,
             default_location,
             quran_database,
+            system_fonts,
+            storage_paths,
             hijri_month,
             hijri_today,
             reciters,

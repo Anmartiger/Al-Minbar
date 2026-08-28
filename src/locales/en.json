@@ -1,0 +1,123 @@
+{
+  "nav": {
+    "prayer": "Prayer times", "quran": "Quran", "athkar": "Athkar",
+    "qibla": "Qibla", "calendar": "Calendar", "settings": "Settings",
+    "sections": "Sections"
+  },
+  "home": {
+    "today": "Today", "until": "Until {name}", "at": "at {time}",
+    "timetable": "Today’s timetable", "sunrise": "Sunrise {time}",
+    "sunset": "Sunset {time}", "qibla": "Qibla {bearing}° · {distance} km",
+    "continue": "Continue reading", "muteOne": "Mute the {name} notification",
+    "unmuteOne": "Enable the {name} notification",
+    "unavailable": "Prayer times unavailable",
+    "noTrayTitle": "No panel tray on this desktop",
+    "noTrayBody": "Nothing on this session is showing StatusNotifierItem icons, so the countdown cannot appear in the panel. Prayer notifications and the adhan still work, and this window stays reachable.",
+    "noTrayFix": "On GNOME, install the AppIndicator extension, then log out and back in:",
+    "searchCity": "Search a city — English or العربية",
+    "cityHint": "Searches a bundled offline list of about 70,000 cities. Nothing leaves the machine.",
+    "noCity": "No city found",
+    "noCityBody": "Try another spelling, or a nearby larger town. The database is bundled, so this works with no connection."
+  },
+  "prayer": {
+    "fajr": "Fajr", "sunrise": "Sunrise", "dhuhr": "Dhuhr",
+    "asr": "Asr", "maghrib": "Maghrib", "isha": "Isha"
+  },
+  "quran": {
+    "search": "Search — الرحمن, Baqara, or 2:255",
+    "reading": "Reading", "mushaf": "Mushaf", "allSurahs": "All surahs",
+    "translation": "Translation", "tafsir": "Tafsir",
+    "bookmark": "Bookmark", "removeBookmark": "Remove bookmark",
+    "copy": "Copy with reference", "playFrom": "Play from this verse",
+    "verses": "{count} verses", "nothingFound": "Nothing found",
+    "nothingFoundBody": "No verse contains “{query}”. Search ignores harakat, so الرحمن matches ٱلرَّحْمَٰن.",
+    "notInstalled": "The Quran database is not installed",
+    "notInstalledBody": "It is built from the bundled sources at package time. Run `npm run content` and rebuild the app.",
+    "goTo": "Go to {ref}", "noSurah": "No surah matches",
+    "noSurahBody": "Try an Arabic or Latin name, a number, or a reference like 2:255."
+  },
+  "player": {
+    "play": "Play", "pause": "Pause", "previous": "Previous verse", "next": "Next verse",
+    "reciter": "Reciter", "speed": "Playback speed", "position": "Position in the verse",
+    "repeatOff": "Repeat off", "repeatVerse": "Repeat this verse", "repeatSurah": "Repeat the surah",
+    "download": "Download this surah for offline listening", "cancel": "Cancel the download",
+    "close": "Close the player", "noConnection": "No connection",
+    "downloading": "Downloading {done} / {total}", "failed": "{count} failed",
+    "cached": "{cached} of {total} verses cached · {size}",
+    "blockedOffline": "No recitation is downloaded for this surah, and there is no connection to fetch it.",
+    "blockedOnline": "No recitation is downloaded for this surah yet. Download it to listen offline."
+  },
+  "athkar": {
+    "title": "Athkar", "search": "Search the athkar", "daily": "Daily",
+    "all": "All chapters", "matching": "{count} matching",
+    "adhkar": "{count} adhkar", "thisMorning": "this morning", "thisEvening": "this evening",
+    "reset": "Start this set again", "back": "All chapters",
+    "complete": "Set complete", "tasbeeh": "Tasbeeh", "target": "target",
+    "countOne": "Count one", "resetCount": "Reset the count",
+    "remaining": "{count} remaining, tap to count", "done": "done",
+    "of": "of {count}", "nothingMatches": "Nothing matches",
+    "nothingMatchesBody": "Try part of a chapter title in Arabic.",
+    "notInstalled": "The athkar are not installed",
+    "notInstalledBody": "They are built from the bundled source at package time. Run `npm run content` and rebuild."
+  },
+  "qibla": {
+    "title": "Qibla", "fromNorth": "from true north", "toMakkah": "km to Makkah",
+    "headingTitle": "This dial does not know which way you are facing.",
+    "headingBody": "A laptop has no magnetometer, so the app can only tell you the bearing, not your heading. Point a phone compass at {bearing}°, or at solar noon face your shadow and turn {bearing}° clockwise from straight ahead.",
+    "trueNorth": "The bearing is from true north. A magnetic compass points to magnetic north, which differs from it by several degrees in most places — the app does not show that offset, because computing it offline needs a geomagnetic model it does not carry, and a guessed figure is worse than none."
+  },
+  "calendar": {
+    "previous": "Previous month", "next": "Next month", "ah": "{year} AH",
+    "adjustment": "Hijri adjustment",
+    "adjustmentBody": "This is the tabular calendar. Local moon sighting can differ from it by a day, so shift it to match your masjid.",
+    "earlier": "One day earlier", "later": "One day later"
+  },
+  "settings": {
+    "title": "Settings",
+    "location": "Location", "prayerTimes": "Prayer times",
+    "notifications": "Notifications & adhan", "typography": "Typography",
+    "appearance": "Appearance", "quran": "Quran", "language": "Language",
+    "startup": "Startup & panel widget", "storage": "Data & storage", "about": "About",
+    "method": "Calculation method", "madhab": "Asr madhab",
+    "highLatitude": "High-latitude rule", "offsets": "Per-prayer offset",
+    "shafi": "Shafi‘i, Maliki, Hanbali", "hanafi": "Hanafi",
+    "middleOfTheNight": "Middle of the night", "seventhOfTheNight": "One seventh",
+    "twilightAngle": "Angle based",
+    "enableNotifications": "Prayer notifications", "reminder": "Pre-prayer reminder",
+    "reminderNone": "None", "reminderMinutes": "{count} minutes before",
+    "adhanEnabled": "Play the adhan", "volume": "Volume",
+    "silentFajr": "Silent for Fajr", "sound": "Adhan sound", "fajrSound": "Fajr adhan",
+    "testPlay": "Test", "stop": "Stop",
+    "theme": "Theme", "light": "Light", "dark": "Dark", "system": "Follow system",
+    "accent": "Accent", "digits": "Numerals",
+    "arabicIndic": "Arabic-Indic ٠١٢٣", "western": "Western 0123",
+    "interfaceLanguage": "Interface language",
+    "autostart": "Start automatically at login",
+    "startHidden": "Start in the panel without a window",
+    "trayDelay": "Delay before the panel item appears",
+    "trayFormat": "Panel label", "closeToQuit": "Closing the window quits the app",
+    "shortcut": "Global shortcut",
+    "labelNameCountdown": "Name and countdown", "labelNameTime": "Name and time",
+    "labelCountdown": "Countdown only", "labelIcon": "Icon only",
+    "configDir": "Settings", "dataDir": "Database", "cacheDir": "Downloaded audio",
+    "cacheSize": "{size} in {files} files", "clearCache": "Clear downloaded audio",
+    "reset": "Reset", "seconds": "{count}s",
+    "fontQuran": "Quran", "fontAthkar": "Athkar", "fontInterface": "Interface",
+    "family": "Family", "size": "Size", "lineHeight": "Line height",
+    "letterSpacing": "Letter spacing",
+    "letterSpacingArabic": "Letter spacing is disabled for Arabic — it breaks the joins between letters.",
+    "noFontconfig": "fontconfig is not available, so only the bundled fonts are listed.",
+    "preview": "Preview", "bundled": "Bundled", "systemFonts": "System"
+  },
+  "about": {
+    "title": "About the data",
+    "intro": "Every bundled text keeps its source and licence. Nothing here is generated, and nothing is fetched at runtime.",
+    "source": "Source", "licence": "Licence", "notice": "Notice",
+    "sajdaNote": "All 15 sajda markers are rendered. Schools differ on whether 14 or 15 of them are recited prostrations; the app marks them all rather than choosing a side.",
+    "athkarNote": "The publisher’s feed carries the text and repeat count only, so hadith references and benefit notes are absent rather than sourced elsewhere.",
+    "verses": "{count} verses", "adhkar": "{count} adhkar", "checksum": "Checksum"
+  },
+  "common": {
+    "close": "Close", "back": "Back", "dismiss": "Dismiss", "on": "On", "off": "Off"
+  }
+}

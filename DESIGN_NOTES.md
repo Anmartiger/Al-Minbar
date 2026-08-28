@@ -728,3 +728,50 @@ rather than asserted, since it is not fixed.
 Five fixed destinations and a wide window: a vertical rail keeps the height for
 content and reads as chrome rather than as content. Position is marked with a rule
 on the leading edge, the same device the timetable uses.
+
+---
+
+## 12. Phase 6 decisions
+
+### 12.1 The locale bundles are a build gate
+
+§9 puts every UI string in `src/locales/{ar,en}.json`. Neither failure mode is
+loud at runtime: a key present in one bundle and missing from the other renders as
+a raw key, and a placeholder that differs between them silently drops its value. So
+`scripts/check-locales.mjs` fails the build on either, and on an empty string.
+187 keys, agreeing.
+
+The flip is applied to `document.documentElement`, not to a wrapper element.
+`dir` on a div leaves the window chrome, form controls and scrollbars behind, and
+§9 asks for a *complete* flip.
+
+### 12.2 The typography preview reads its text from the database
+
+§5.2 wants the preview to show "real text [...] a real dhikr for athkar", and I
+first wrote that dhikr out by hand. That is precisely what §12.3 forbids, and it is
+the same mistake that put a transposed shadda in the basmalah earlier in this
+project (§9.2). Both the Quran and athkar samples now come from the bundled
+database. Only the interface sample is written here, because prayer names are
+labels rather than revealed text.
+
+### 12.3 Letter-spacing defaults to disabled for unrecognised faces
+
+§5.3: "The letter-spacing slider is disabled (greyed, with a tooltip) for any
+Arabic font — it exists for Latin only."
+
+A face chosen from the system list arrived via `fc-list :lang=ar`, so it covers
+Arabic by definition. Anything unrecognised is *also* treated as Arabic, because
+the two errors are not symmetric: wrongly disabling the slider on a Latin face is a
+missing control, while wrongly allowing it on an Arabic one breaks the joins
+between letters in rendered scripture.
+
+The Quran line-height slider is bounded at 2.0 rather than merely defaulting there,
+for the same reason it exists at all — below that, tashkeel clips (§2.2).
+
+### 12.4 The About screen is generated, not written
+
+§4.2 calls the attribution screen "required, not optional". It reads the
+`attributions` and `meta` tables rather than hard-coding credits, so rebuilding the
+database from new sources updates the credits along with them — including the
+Uthmani checksum and the counts. The 14-vs-15 sajda note §4.2 asks for is there,
+alongside the athkar gap from §10.1.

@@ -1,0 +1,72 @@
+/* §7.6 — grouped settings in a scrolling pane. No modal stacking: a pane list on
+   the leading edge, its content beside it. */
+
+.settings { display: flex; height: 100%; min-height: 0; }
+
+.settings-panes {
+  flex: 0 0 auto; inline-size: 190px;
+  display: flex; flex-direction: column; gap: 1px;
+  padding: var(--space-5) var(--space-3);
+  border-inline-end: 1px solid var(--hairline);
+  overflow-y: auto;
+}
+.settings-pane-link {
+  border: 0; background: transparent; color: var(--text-2); font: inherit;
+  font-size: var(--text-callout); text-align: start; cursor: default;
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
+  transition: background var(--duration-micro) var(--ease),
+              color var(--duration-micro) var(--ease);
+}
+.settings-pane-link:hover { background: var(--fill-quieter); color: var(--text); }
+.settings-pane-link[aria-current='page'] { background: var(--tint); color: var(--accent); }
+
+.settings-body { flex: 1; min-inline-size: 0; overflow-y: auto;
+                 padding: var(--space-6) var(--space-7) var(--space-9); }
+.settings-section { max-inline-size: 680px; }
+.settings-section > h2 { font-size: var(--text-title2); font-weight: var(--weight-title2);
+                         margin: 0 0 var(--space-4); }
+.settings-note { font-size: var(--text-caption); color: var(--text-2);
+                 margin: 0 0 var(--space-4); max-inline-size: 62ch; line-height: 1.6; }
+
+.settings-select {
+  appearance: none; border: var(--rule) solid var(--rule-colour);
+  background: transparent; color: var(--text); font: inherit;
+  font-size: var(--text-caption); padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-xs); cursor: default; max-inline-size: 220px;
+}
+
+.settings-swatches { display: flex; gap: var(--space-1); }
+.settings-swatch { inline-size: 22px; block-size: 22px; border-radius: var(--radius-full);
+                   border: 1px solid var(--hairline); padding: 0; cursor: default; }
+.settings-swatch[aria-pressed='true'] { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ----------------------------- typography ------------------------------- */
+
+.typo-block { padding: var(--space-4) var(--space-5); margin-block-end: var(--space-5); }
+.typo-head { display: flex; align-items: center; justify-content: space-between;
+             gap: var(--space-3); margin-block-end: var(--space-3); }
+.typo-head h3 { margin: 0; font-size: var(--text-micro); text-transform: uppercase;
+                letter-spacing: 0.14em; color: var(--text-2); }
+/* §5.2's live preview. Bounded so a 56px face cannot push the pane sideways. */
+.typo-preview {
+  margin-block-start: var(--space-4); padding: var(--space-4);
+  border-block-start: 1px solid var(--separator);
+  overflow-x: auto; text-align: center;
+}
+
+/* -------------------------------- about --------------------------------- */
+
+.about-facts { font-size: var(--text-caption); color: var(--text-2);
+               font-variant-numeric: tabular-nums; margin-block-end: var(--space-5); }
+.about-checksum { font-family: ui-monospace, monospace; font-size: var(--text-micro); }
+.about-entry { padding: var(--space-4) var(--space-5); margin-block-end: var(--space-4); }
+.about-entry h3 { margin: 0 0 var(--space-3); font-size: var(--text-headline); }
+.about-entry dl { display: grid; grid-template-columns: auto 1fr;
+                  gap: var(--space-1) var(--space-4); margin: 0; font-size: var(--text-caption); }
+.about-entry dt { color: var(--text-2); text-transform: uppercase; letter-spacing: 0.1em;
+                  font-size: var(--text-micro); padding-block-start: 2px; }
+.about-entry dd { margin: 0; word-break: break-word; }
+.about-notice { margin: var(--space-3) 0 0; padding: var(--space-3);
+                background: var(--fill-quieter); border-radius: var(--radius-xs);
+                font-size: var(--text-micro); line-height: 1.5; white-space: pre-wrap;
+                max-block-size: 200px; overflow-y: auto; color: var(--text-2); }
