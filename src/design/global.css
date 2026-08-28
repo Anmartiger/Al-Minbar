@@ -6,7 +6,44 @@
 html, body, #root { height: 100%; margin: 0; }
 
 /* §6.7: rounded window corners need transparent: true plus a transparent-clear
-   body. The root container does the painting and the rounding. */
+   body, so the window backdrop is painted by the pseudo-element below rather than
+   by `body` itself - a background on `body` would fill the full rectangle and
+   square the corners off.
+   Painting it here rather than in a React component is deliberate: a transparent
+   window whose content fails to load is not a blank window, it is an *invisible*
+   one. This layer is styled off an attribute the Rust side stamps on <html>
+   before the page runs, so the frame is there even if the app never mounts. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: var(--window-margin, 0px);
+  border-radius: var(--radius-xl);
+  background: rgba(var(--window-tint), var(--window-opacity));
+  /* Blurs page content behind this layer. It cannot blur the *desktop* behind the
+     window - that needs compositor cooperation GNOME does not offer an app.
+     See DESIGN_NOTES.md §8. */
+  backdrop-filter: blur(var(--window-blur)) saturate(var(--window-saturate));
+  -webkit-backdrop-filter: blur(var(--window-blur)) saturate(var(--window-saturate));
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* X11 without a reliable compositor: opaque and square, never a black corner. */
+html[data-transparent='false'] body::before {
+  inset: 0;
+  border-radius: 0;
+  background: var(--bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* No backdrop-filter support (§6.4): opaque at the same lightness, same geometry. */
+html[data-backdrop='no'] body::before {
+  background: var(--bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 body {
   background: transparent;
   color: var(--text);

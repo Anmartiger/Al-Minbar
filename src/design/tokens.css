@@ -101,6 +101,15 @@
   --tooltip-bg: #2B2A28;
   --tooltip-fg: #F7F6F3;
 
+  /* ---- Window translucency -------------------------------------------- */
+  /* How much of the desktop shows through the window. 1 = fully opaque.
+     Lower it for more see-through; the text tokens keep their contrast because
+     the surfaces above this layer are painted separately. */
+  --window-opacity: 0.78;
+  --window-tint: 247, 246, 243;   /* --bg as rgb, for the translucent fill */
+  --window-blur: 30px;
+  --window-saturate: 180%;
+
   /* ---- Window chrome §6.7 --------------------------------------------- */
   --titlebar-height: 44px;
   --window-margin: 24px;  /* transparent padding the drop shadow lives in */
@@ -120,6 +129,8 @@
      as the depth cue. */
   --top-highlight: rgba(255, 255, 255, 0.06);
   --accent-fg: #131312;
+
+  --window-tint: 19, 19, 18;      /* dark --bg as rgb */
 
   --accent-green-teal: #3AA294;
   --accent-indigo: #8F88DD;

@@ -14,7 +14,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--bg);
+  /* Transparent on purpose: body::before paints the translucent backdrop, so the
+     desktop shows through the window rather than through a hole in it. */
+  background: transparent;
   border-radius: var(--frame-radius, 0px);
   box-shadow: var(--frame-shadow, none);
 }

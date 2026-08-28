@@ -496,3 +496,65 @@ silent-for-Fajr, test-play, immediate stop from three surfaces, and quiet failur
 another application holds the audio device. §4.4's "let the user point at their own
 audio file" is implemented — any sound id that is not a bundled one is treated as a
 path — so a user can supply their own adhan today. See `src-tauri/assets/audio/README.md`.
+
+---
+
+## 8. Corrections after the Phase 3 review
+
+### 8.1 The "invisible window" was a build-procedure fault, and a real design fault
+
+Clicking **Open Al-Minabr** produced a window that could not be seen, with an
+unreadable "can't connect to localhost" behind it. Two separate causes:
+
+1. **The binary was built with `cargo build --release`, not `npm run tauri build`.**
+   `tauri-build` only switches from `devUrl` to `frontendDist` when it is invoked
+   through the Tauri CLI, so a plain cargo build embeds `http://localhost:1420`
+   even in release. With no dev server running the page cannot load.
+   **Production builds must go through `npm run tauri build`.**
+2. **A transparent window with no content is invisible, not blank.** Nothing painted
+   the window backdrop except a React component, so when the page failed there was
+   no frame, no background, and no way to tell the window was there at all.
+
+The second is the one worth fixing, because any future load failure would look the
+same. The backdrop is now painted by `body::before` in CSS, keyed off attributes the
+Rust side stamps onto `<html>` with `initialization_script` **before the page runs**.
+The frame is therefore visible on the first frame, and stays visible even if the app
+never mounts. That also removes the async `invoke('window_chrome')` round-trip that
+previously delayed the frame's geometry.
+
+### 8.2 Translucency: what is achievable and what is not
+
+The request was "blur transparent" - a window that blurs what is behind it.
+
+**Blurring the desktop behind a window is not something an application can do on
+GNOME.** It needs compositor cooperation: KDE exposes it (`org_kde_kwin_blur`), and
+GNOME does not implement any equivalent protocol. `backdrop-filter` inside the
+webview blurs *page content* behind an element, not the desktop behind the window -
+so on the root layer it is a no-op for the desktop no matter how it is configured.
+
+What is implemented:
+
+- the window is genuinely **translucent** - `--window-opacity` (default 0.82) sets
+  how much desktop shows through, and is a single token to tune;
+- `backdrop-filter` is applied on that layer anyway, so it does the right thing for
+  the mini window over app content and on compositors that do more;
+- the app's own `Material` layers (§6.4) blur content behind them within the app,
+  which is where most of the depth comes from.
+
+For actual desktop blur on GNOME the only route is a shell extension such as
+Blur my Shell, which blurs from the compositor side. That is the user's choice to
+install, not something the app can request.
+
+### 8.3 The hidden-mode memory budget is raised
+
+§8.1 sets "under 60 MB in background mode". Measured on Ubuntu 26.04, release build,
+hidden: **59.7 MB RSS / 31.4 MB PSS**. It passed, but with no headroom worth having.
+
+RSS is misleading here: most of it is shared GTK/WebKit library pages that Tauri
+links unconditionally and shares with every other GTK application on the session.
+**PSS - 31.4 MB - is the honest figure for what the process actually costs.**
+
+Budget revised (2026-08-28, user's decision): **under 100 MB RSS in hidden mode**,
+with PSS the number actually tracked. The requirement it protects is unchanged and
+still holds: no webview process exists in hidden mode, which is what separates a
+lightweight resident from the 250 MB idle process §8.1 warns about.

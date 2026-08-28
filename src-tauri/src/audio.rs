@@ -7,8 +7,9 @@
 //! > quietly to a notification rather than crashing the scheduler."
 //!
 //! The output stream is opened lazily and dropped when playback ends, so an idle
-//! background process holds no audio device - §8.1 budgets it at under 60 MB and a
-//! held ALSA/PipeWire handle is both memory and a needless claim on the device.
+//! background process holds no audio device - a held ALSA/PipeWire handle is both
+//! memory and a needless claim on the device. (The hidden-mode memory budget was
+//! raised from §8.1's 60 MB to 100 MB RSS; see DESIGN_NOTES.md §8.3.)
 
 use std::io::Cursor;
 use std::path::{Path, PathBuf};

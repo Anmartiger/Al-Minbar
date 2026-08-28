@@ -6,8 +6,8 @@
 //! directly. [...] Do not call a geolocation service."
 //!
 //! The table is embedded in the binary and parsed on first search, not at startup -
-//! §8.1 budgets background mode at under 60 MB resident, and a resident process
-//! that never opens a window should not be holding 70,000 cities in memory.
+//! a resident process that never opens a window should not be holding 70,000 cities
+//! in memory. (Budget: 100 MB RSS hidden, revised from §8.1's 60 - DESIGN_NOTES §8.3.)
 //! See `scripts/build-cities.py` for the encoding.
 
 use serde::Serialize;

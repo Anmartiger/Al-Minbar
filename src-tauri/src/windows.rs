@@ -47,6 +47,22 @@ pub fn detect_chrome() -> WindowChrome {
     }
 }
 
+/// Stamps the session onto <html> before the page runs, so the window background
+/// paints on the very first frame.
+///
+/// This matters more than it looks. A transparent window whose content fails to
+/// load renders as *nothing at all* - not a blank window, an invisible one, with
+/// no way to tell it is there. Painting the backdrop from CSS that is keyed off an
+/// attribute set here means the frame is visible even if the app never mounts.
+fn session_script(chrome: WindowChrome) -> String {
+    format!(
+        "document.documentElement.dataset.session='{}';\
+         document.documentElement.dataset.transparent='{}';\
+         document.documentElement.style.setProperty('--window-margin','{}px');",
+        chrome.session_type, chrome.transparent, chrome.shadow_margin
+    )
+}
+
 pub fn is_wayland() -> bool {
     detect_chrome().session_type == "wayland"
 }
@@ -65,6 +81,7 @@ pub fn show_main(app: &AppHandle) -> tauri::Result<WebviewWindow> {
     let chrome = detect_chrome();
     let pad = chrome.shadow_margin * 2.0;
     let win = WebviewWindowBuilder::new(app, MAIN, WebviewUrl::default())
+        .initialization_script(&session_script(chrome))
         .title(app.package_info().name.clone())
         .decorations(false)
         .transparent(chrome.transparent)
@@ -103,6 +120,7 @@ pub fn close_mini(app: &AppHandle) {
 fn build_mini(app: &AppHandle) -> tauri::Result<WebviewWindow> {
     let chrome = detect_chrome();
     let mut builder = WebviewWindowBuilder::new(app, MINI, WebviewUrl::App("index.html#/mini".into()))
+        .initialization_script(&session_script(chrome))
         .title("Al-Minabr")
         .decorations(false)
         .transparent(chrome.transparent)
