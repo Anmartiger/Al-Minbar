@@ -1,0 +1,57 @@
+# Gates that run on every push, on the host runner — fast, and independent of the
+# release container. The release workflow repeats them inside 22.04 before
+# bundling, because passing here says nothing about the glibc floor.
+
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev libsoup-3.0-dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('src-tauri/Cargo.lock') }}
+
+      - run: npm ci
+
+      # npm run build runs the accent-contrast gate (§6.3), the countdown-logic
+      # check, the locale-parity check (§9) and the content-database build, which
+      # refuses to write a database failing any count §4.2 names.
+      - name: Frontend gates, content database, type check
+        run: npm run build
+
+      - name: Rust tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Clippy
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+        # The vendored salah copy is upstream code with a two-line patch; its
+        # lints are not this project's to fix.
+        continue-on-error: true

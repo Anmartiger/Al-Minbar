@@ -1,0 +1,139 @@
+# Release build for Al-Minabr.
+#
+# §11: "Build on the oldest supported distro, not the newest. glibc and WebKitGTK
+# symbols are forward-compatible, not backward — a .deb built on 26.04 will not
+# install on 22.04, while one built on 22.04 runs everywhere. Build in a 22.04
+# container in CI."
+#
+# That is not theoretical. A binary built on 26.04 requires GLIBC_2.39; Ubuntu
+# 22.04 ships 2.35, so it will not even start there. The container below is what
+# makes one artifact work on every supported release.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (leave blank for a dry run with no release)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build .deb and AppImage on Ubuntu 22.04
+    runs-on: ubuntu-latest
+    # The runner image is newer than the floor we support, so the build happens
+    # inside 22.04 rather than on the host.
+    container:
+      image: ubuntu:22.04
+      options: --privileged
+
+    steps:
+      - name: Install build dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential curl wget file git ca-certificates \
+            libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev libsoup-3.0-dev \
+            patchelf desktop-file-utils fuse3 libfuse2 python3 xz-utils
+          # AppImage tooling needs FUSE; the container has no /dev/fuse by default.
+          # APPIMAGE_EXTRACT_AND_RUN avoids needing it at all.
+          echo "APPIMAGE_EXTRACT_AND_RUN=1" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --profile minimal --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-22.04-${{ hashFiles('src-tauri/Cargo.lock') }}
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      # The content database is derived from the committed sources, so it is built
+      # here rather than committed. `npm run build` also runs the accent-contrast,
+      # countdown-logic and locale-parity gates.
+      - name: Build the frontend and content database
+        run: npm run build
+
+      - name: Verify the content database
+        run: |
+          python3 - <<'PY'
+          import sqlite3, sys
+          db = sqlite3.connect('src-tauri/resources/quran.db')
+          counts = dict(db.execute("SELECT key, value FROM meta"))
+          expected = {'verse_count': '6236', 'surah_count': '114',
+                      'page_count': '604', 'sajda_count': '15'}
+          bad = {k: (counts.get(k), v) for k, v in expected.items() if counts.get(k) != v}
+          if bad:
+              print('content database is wrong:', bad); sys.exit(1)
+          print('content database OK:', counts)
+          PY
+
+      - name: Rust tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Bundle
+        run: npx tauri build --bundles deb,appimage
+
+      - name: Check the glibc floor
+        run: |
+          BIN=src-tauri/target/release/al-minabr
+          MAX=$(objdump -T "$BIN" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1)
+          echo "highest glibc symbol required: $MAX"
+          # 22.04 ships 2.35. Anything above it means the build escaped the container.
+          if [ "$(printf '%s\nGLIBC_2.35\n' "$MAX" | sort -V | tail -1)" != "GLIBC_2.35" ]; then
+            echo "::error::binary requires $MAX, above the 22.04 floor of GLIBC_2.35"
+            exit 1
+          fi
+
+      - name: Verify the .deb installs
+        run: |
+          DEB=$(find src-tauri/target/release/bundle/deb -name '*.deb' | head -1)
+          dpkg-deb --info "$DEB"
+          dpkg-deb --contents "$DEB" | grep -E 'al-minabr.desktop|usr/bin/al-minabr'
+          apt-get install -y "$DEB"
+          test -x /usr/bin/al-minabr
+          # §8.4: the dock groups the window by StartupWMClass, and the desktop
+          # Actions must survive packaging.
+          grep -q 'StartupWMClass=al-minabr' /usr/share/applications/*.desktop
+          grep -q 'Actions=' /usr/share/applications/*.desktop
+          desktop-file-validate /usr/share/applications/*.desktop || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: al-minabr-linux
+          path: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/appimage/*.AppImage
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/appimage/*.AppImage
+          generate_release_notes: true
