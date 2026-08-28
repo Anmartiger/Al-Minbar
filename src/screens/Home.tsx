@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Bell, BellOff, Compass, MapPin, Sunrise, Sunset } from 'lucide-react';
+import { Bell, BellOff, Compass, MapPin, Sunrise, Sunset, X } from 'lucide-react';
 import {
-  Badge, EmptyState, IconButton, List, ListRow, ProgressRing,
+  Badge, Card, EmptyState, IconButton, List, ListRow, ProgressRing,
   SearchField, Sheet, Skeleton,
 } from '../components/ui';
+import { getStatus, type StatusView } from '../lib/status';
 import {
   DEFAULT_SETTINGS, PRAYER_LABELS, backendAvailable, currentPrayer, defaultLocation,
   flatten, formatCountdown, prayerWindow, progressOf, qibla as fetchQibla, searchCities,
@@ -37,6 +38,8 @@ export default function Home({ arabicIndic, onOpenQibla }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<Array<Location & { name: string; name_ar: string }>>([]);
+  const [trayMissing, setTrayMissing] = useState(false);
+  const [trayNoticeDismissed, setTrayNoticeDismissed] = useState(false);
 
   /* §7.1: the countdown ticks every second. */
   useEffect(() => {
@@ -77,6 +80,17 @@ export default function Home({ arabicIndic, onOpenQibla }: Props) {
     const lastOfDay = todayTimes[todayTimes.length - 1];
     if (nowEpoch > lastOfDay.epoch + 6 * 3600) load(location);
   }, [nowEpoch, location, loadedDate, days, load]);
+
+  /* §8.2: "Detect at startup whether a StatusNotifierItem host is registered on
+     the session bus. If none is, show a one-time, dismissible first-run card
+     explaining the situation and naming the fix - and keep the app fully
+     functional without it. Never silently start invisible with no way back." */
+  useEffect(() => {
+    if (!backendAvailable()) return;
+    getStatus()
+      .then((s: StatusView | null) => setTrayMissing(Boolean(s && !s.trayAvailable)))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!sheetOpen || query.trim().length < 2) { setHits([]); return; }
@@ -133,6 +147,26 @@ export default function Home({ arabicIndic, onOpenQibla }: Props) {
   return (
     <div className="home" style={skyStyle}>
       <div className="home-sky" aria-hidden />
+
+      {trayMissing && !trayNoticeDismissed && (
+        <Card className="tray-notice">
+          <div className="tray-notice-head">
+            <strong>No panel tray on this desktop</strong>
+            <IconButton label="Dismiss" onClick={() => setTrayNoticeDismissed(true)}>
+              <X size={15} strokeWidth={1.5} />
+            </IconButton>
+          </div>
+          <p>
+            Nothing on this session is showing StatusNotifierItem icons, so the countdown
+            cannot appear in the panel. Prayer notifications and the adhan still work, and
+            this window stays reachable.
+          </p>
+          <p>
+            On GNOME, install the AppIndicator extension, then log out and back in:
+          </p>
+          <code>sudo apt install gnome-shell-extension-appindicator</code>
+        </Card>
+      )}
 
       <header className="home-header">
         <div>

@@ -418,10 +418,16 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_autostart::init(
-            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec![FLAG_HIDDEN]),
-        ));
+        // §8.1 names the file exactly: "writes ~/.config/autostart/al-minabr.desktop",
+        // and §10 checks for that path by name when autostart is switched off. The
+        // plugin defaults to the product name ("Al-Minabr.desktop"), so the app id
+        // is passed explicitly - §1 wants every derived identifier to be al-minabr.
+        .plugin(
+            tauri_plugin_autostart::Builder::new()
+                .app_name("al-minabr")
+                .args([FLAG_HIDDEN])
+                .build(),
+        );
 
     if shortcut.is_some() {
         builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());

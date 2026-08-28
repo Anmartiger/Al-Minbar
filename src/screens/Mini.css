@@ -1,0 +1,73 @@
+/* §8.3 — the surface the user actually sees ten times a day, so it gets the same
+   design care as the home screen. */
+
+.mini {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  gap: var(--space-4);
+}
+
+.mini-hijri {
+  font-family: var(--font-arabic);
+  font-size: var(--text-headline);
+  line-height: var(--lh-arabic-ui);
+  letter-spacing: normal;
+  color: var(--text-2);
+  text-align: center;
+}
+
+.mini-hero { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.mini-ring { position: relative; display: grid; place-items: center; }
+.mini-ring-inner { position: absolute; display: flex; flex-direction: column; align-items: center; }
+.mini-name {
+  font-family: var(--font-quran);
+  font-size: 26px;
+  line-height: 1.3;
+  letter-spacing: normal;
+  color: var(--accent);
+}
+.mini-countdown {
+  font-size: 30px;
+  font-weight: var(--weight-title1);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.mini-countdown.arabic-indic { font-family: var(--font-arabic); letter-spacing: normal; }
+.mini-at { font-size: var(--text-caption); color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+.mini-times { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
+.mini-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-callout);
+  font-variant-numeric: tabular-nums;
+}
+.mini-row[data-current='true'] { background: var(--tint); color: var(--accent); font-weight: var(--weight-headline); }
+.mini-row[data-passed='true'] { color: var(--text-2); }
+.mini-row-name { font-family: var(--font-arabic); font-size: var(--text-body); letter-spacing: normal; }
+
+/* §8.7: "show a quiet 'Maghrib passed at 19:42' line". Quiet is the point - this
+   is information, not a reprimand (§6.3: the app never scolds the user). */
+.mini-missed {
+  font-size: var(--text-caption);
+  color: var(--text-2);
+  text-align: center;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--fill-quieter);
+}
+
+.mini-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: var(--space-2);
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--separator);
+}

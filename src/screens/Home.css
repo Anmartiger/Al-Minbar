@@ -191,3 +191,16 @@
   color: var(--text-2);
   font-size: var(--text-callout);
 }
+
+/* §8.2's one-time, dismissible no-tray card. */
+.tray-notice { margin-block-end: var(--space-5); }
+.tray-notice-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-3); margin-block-end: var(--space-2);
+}
+.tray-notice p { margin: 0 0 var(--space-2); font-size: var(--text-callout); color: var(--text-2); }
+.tray-notice code {
+  display: block; padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm); background: var(--fill-quieter);
+  font-size: var(--text-caption); overflow-x: auto;
+}

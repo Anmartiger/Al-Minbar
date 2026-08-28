@@ -7,13 +7,17 @@ import {
 } from './design/theme';
 import Home from './screens/Home';
 import Gallery from './dev/Gallery';
+import Mini from './screens/Mini';
 
 /** §11 Phase 1 asks for a /dev/components gallery route. No router in the stack
  *  (§3), and one dev route does not justify adding one - the hash form also works
  *  in a packaged build where a deep path would not resolve. */
 const GALLERY_HASH = '#/dev/components';
+const MINI_HASH = '#/mini';
 const isGalleryRoute = () =>
   location.pathname === '/dev/components' || location.hash === GALLERY_HASH;
+/** §8.3's mini window is a second window on the same bundle, told apart by route. */
+const isMiniRoute = () => location.hash === MINI_HASH;
 
 function useHashRoute(): boolean {
   const [gallery, setGallery] = useState(isGalleryRoute);
@@ -58,6 +62,12 @@ export default function App() {
     if (theme !== 'system') return;
     return watchSystemTheme(() => applyAppearance({ theme, accent }));
   }, [theme, accent]);
+
+  // §8.3: the mini window is frameless with its own chrome, so it never wears
+  // the main window's title bar or resize edges.
+  if (isMiniRoute()) {
+    return <Mini arabicIndic={document.documentElement.lang.startsWith('ar')} />;
+  }
 
   if (!chrome) return null;
 

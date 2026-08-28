@@ -36,16 +36,6 @@ export const DEFAULT_SETTINGS: Settings = {
   hijri_adjustment: 0,
 };
 
-/** §7.1 lists the five prayers plus sunrise, with Latin transliteration beneath. */
-export const PRAYER_LABELS: Record<PrayerId, { ar: string; latin: string }> = {
-  fajr: { ar: 'الفجر', latin: 'Fajr' },
-  sunrise: { ar: 'الشروق', latin: 'Sunrise' },
-  dhuhr: { ar: 'الظهر', latin: 'Dhuhr' },
-  asr: { ar: 'العصر', latin: 'Asr' },
-  maghrib: { ar: 'المغرب', latin: 'Maghrib' },
-  isha: { ar: 'العشاء', latin: 'Isha' },
-};
-
 export type Qibla = { bearing: number; distanceKm: number };
 
 export const defaultLocation = () => invoke<Location>('default_location');

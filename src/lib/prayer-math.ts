@@ -23,6 +23,16 @@ export type DayTimes = {
   times: PrayerTime[];
 };
 
+/** §7.1 lists the five prayers plus sunrise, with Latin transliteration beneath. */
+export const PRAYER_LABELS: Record<PrayerId, { ar: string; latin: string }> = {
+  fajr: { ar: 'الفجر', latin: 'Fajr' },
+  sunrise: { ar: 'الشروق', latin: 'Sunrise' },
+  dhuhr: { ar: 'الظهر', latin: 'Dhuhr' },
+  asr: { ar: 'العصر', latin: 'Asr' },
+  maghrib: { ar: 'المغرب', latin: 'Maghrib' },
+  isha: { ar: 'العشاء', latin: 'Isha' },
+};
+
 /* ------------------------------ digits (§5.3) ----------------------------- */
 
 const ARABIC_INDIC = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
