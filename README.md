@@ -1,4 +1,7 @@
-<img src="src-tauri/icons/128x128.png" width="80" align="middle" alt="">
+<div align="center">
+  <img src="src-tauri/icons/128x128.png" width="80" alt="">
+</div>
+
 
 # Al-Minabr · المنبر
 
