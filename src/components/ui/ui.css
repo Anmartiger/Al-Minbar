@@ -103,6 +103,11 @@
 /* ========================= SegmentedControl ============================ */
 
 .segctl {
+  /* The thumb is absolutely positioned; without this it resolves against the
+     nearest positioned ancestor instead — which is the window itself, so it
+     became a full-height bar across the title bar. It only looked right in the
+     gallery because a Material wrapper happened to be positioned. */
+  position: relative;
   display: inline-flex;
   background: var(--fill-quieter);
   border: 1px solid var(--hairline);
