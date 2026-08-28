@@ -623,3 +623,57 @@ the user's filesystem. Covered by a test that tries.
 One `<audio>` element is reused across verses and its `ended` event is the *only*
 thing that advances the highlight. Nothing is driven off `timeupdate`, which is what
 would let it drift mid-verse.
+
+---
+
+## 10. Athkar source, and three places §4.3 does not match the book
+
+Source: **hisnmuslim.com's own API** — the book's official website, so the text
+comes from the publisher with no transcription layer in between, which is what
+matters under §12.3. 132 categories, 267 adhkar, each with its repeat count.
+
+The popular GitHub datasets were all rejected: `rn0x/Adhkar-json` (123★) and
+`rn0x/hisn_almuslim_json` carry **no licence at all**, and the MIT-licensed
+`YousefAsalya/Islamic-Pro-azkar-API` turns out — from its own `fetch_ar.py` — to be
+scraped from this same API. Its MIT covers that packaging, not al-Qahtani's
+compilation. Going to the publisher directly is both more accurate and no worse
+licensed. The site states no terms; Hisn al-Muslim is freely distributed by the
+Saudi Ministry of Islamic Affairs. Recorded in the About-the-data screen.
+
+### 10.1 References and benefit notes do not exist in any usable form
+
+§4.3 wants each dhikr to carry "optional reference (Bukhari/Muslim/etc.) and
+optional short benefit note". **Searched for a second source that has them and
+there isn't one.** Checked: the official Arabic feed, the official English feed
+(2 of 24 entries mention a source, and only as incidental prose), `rn0x/Adhkar-json`
+(fields are `array/audio/category/filename/id`), `ahegazy/muslimKit`, and the
+IslamHouse API org, which does not exist. Every structured dataset traces back to
+the same publisher feed, which carries text and repeat count only.
+
+The references do exist — as **footnotes in the printed book**. Extracting them from
+a PDF and aligning across 267 adhkar means any misalignment attributes a hadith to
+the wrong source, which under §12.3 is worse than omitting it.
+
+So both fields stay `null`, and §7.3's collapsible chevron only appears where there
+is something behind it.
+
+### 10.2 Morning and evening are one chapter, not two
+
+§4.3 lists "أذكار الصباح · أذكار المساء" as separate categories. In Hisn al-Muslim
+they are a single chapter — **أذكار الصباح والمساء**, 24 adhkar — because the same
+adhkar are recited at both times. Splitting them would invent a distinction the book
+does not make.
+
+§7.3's "today's completion ring for the two time-bound sets" still works, and is
+arguably more correct this way: one set of adhkar, two separate daily completions.
+
+### 10.3 الرقية الشرعية is not a chapter of this book
+
+§4.3 lists it as a category. It is not one. The nearest chapters are duas for the
+sick (49, 50, 51) and against the evil eye (125). Ruqyah in the strict sense is a
+*practice* — Al-Fatiha, Ayat al-Kursi and the last three surahs recited for healing
+— assembled from Quran rather than a chapter of adhkar. Assembling it myself would
+be exactly the invention §12.3 forbids, so the category is omitted. The Quran
+reader already holds every text it would draw on.
+
+§4.3's التسبيح (free counter) needs no dataset and is built as a counter.
