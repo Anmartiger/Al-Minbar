@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowLeft, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, Copy, ScrollText, X,
+  ArrowLeft, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, Copy, Play, ScrollText, X,
 } from 'lucide-react';
 import {
   Badge, EmptyState, IconButton, List, ListRow, SearchField, SegmentedControl, Skeleton, Tooltip,
@@ -12,6 +12,7 @@ import {
   translationFor, versesForPage, versesForSurah,
   type MushafLine, type SearchHit, type Surah, type Verse,
 } from '../lib/quran';
+import Player, { type PlayerTarget } from '../components/Player';
 import './Quran.css';
 
 type Mode = 'mushaf' | 'reading';
@@ -63,6 +64,8 @@ export default function Quran({ arabicIndic }: { arabicIndic: boolean }) {
   const [panel, setPanel] = useState<Panel>(null);
   const [panelText, setPanelText] = useState<{ text: string; name: string } | null>(null);
   const [marks, setMarks] = useState<Set<string>>(new Set());
+  const [player, setPlayer] = useState<PlayerTarget | null>(null);
+  const [playingAyah, setPlayingAyah] = useState<number | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
   const key = (s: number, a: number) => `${s}:${a}`;
@@ -142,6 +145,13 @@ export default function Quran({ arabicIndic }: { arabicIndic: boolean }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [mode]);
+
+  /* §7.2: the recited verse "auto-scrolls into view". */
+  useEffect(() => {
+    if (playingAyah == null || !player) return;
+    document.getElementById(`v-${player.surah}-${playingAyah}`)
+      ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [playingAyah, player]);
 
   const openVerse = useCallback((s: number, a: number) => {
     setQuery(''); setHits(null); setSurah(s); setMode('reading');
@@ -236,8 +246,14 @@ export default function Quran({ arabicIndic }: { arabicIndic: boolean }) {
                 <VerseBlock
                   key={`${v.surah}-${v.ayah}`} verse={v} arabicIndic={arabicIndic}
                   bookmarked={marks.has(key(v.surah, v.ayah))}
+                  playing={player?.surah === v.surah && playingAyah === v.ayah}
                   onBookmark={() => onBookmark(v.surah, v.ayah)}
                   onCopy={() => copyVerse(v)}
+                  onPlay={() => {
+                    const s0 = surahs.find(x => x.number === v.surah);
+                    if (s0) setPlayer({ surah: s0.number, ayahCount: s0.ayah_count, name: s0.name_ar });
+                    setPlayingAyah(v.ayah);
+                  }}
                   onPanel={kind => setPanel({ kind, surah: v.surah, ayah: v.ayah })}
                 />
               ))}
@@ -268,6 +284,15 @@ export default function Quran({ arabicIndic }: { arabicIndic: boolean }) {
           </aside>
         )}
       </div>
+
+      {player && (
+        <Player
+          target={player}
+          currentAyah={playingAyah}
+          onAyah={setPlayingAyah}
+          onClose={() => { setPlayer(null); setPlayingAyah(null); }}
+        />
+      )}
     </div>
   );
 }
@@ -330,16 +355,17 @@ function Browser({ surahs, query, arabicIndic, onPick, onJump }: {
 
 /* ----------------------------- reading mode ------------------------------ */
 
-function VerseBlock({ verse, arabicIndic, bookmarked, onBookmark, onCopy, onPanel }: {
-  verse: Verse; arabicIndic: boolean; bookmarked: boolean;
-  onBookmark: () => void; onCopy: () => void;
+function VerseBlock({ verse, arabicIndic, bookmarked, playing, onBookmark, onCopy, onPlay, onPanel }: {
+  verse: Verse; arabicIndic: boolean; bookmarked: boolean; playing: boolean;
+  onBookmark: () => void; onCopy: () => void; onPlay: () => void;
   onPanel: (kind: 'tafsir' | 'translation') => void;
 }) {
   const basmalah = basmalahOf(verse);
   return (
     <>
       {basmalah && <div className="basmalah" lang="ar" dir="rtl">{basmalah}</div>}
-      <div className="verse-block" id={`v-${verse.surah}-${verse.ayah}`} tabIndex={0}>
+      <div className="verse-block" id={`v-${verse.surah}-${verse.ayah}`} tabIndex={0}
+        data-playing={playing}>
         <div className="verse-text" lang="ar" dir="rtl">
           {verseBody(verse)}
           <AyahMarker n={verse.ayah} arabicIndic={arabicIndic} />
@@ -350,6 +376,11 @@ function VerseBlock({ verse, arabicIndic, bookmarked, onBookmark, onCopy, onPane
           )}
         </div>
         <div className="verse-actions">
+          <Tooltip text="Play from here">
+            <IconButton label="Play from this verse" onClick={onPlay}>
+              <Play size={15} strokeWidth={1.5} />
+            </IconButton>
+          </Tooltip>
           <Tooltip text={bookmarked ? 'Remove bookmark' : 'Bookmark'}>
             <IconButton label={bookmarked ? 'Remove bookmark' : 'Bookmark'}
               active={bookmarked} onClick={onBookmark}>

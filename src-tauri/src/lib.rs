@@ -2,6 +2,7 @@ pub mod audio;
 pub mod cities;
 pub mod prayer;
 pub mod quran;
+pub mod recitation;
 pub mod scheduler;
 pub mod settings;
 pub mod sni;
@@ -104,6 +105,56 @@ fn qibla(latitude: f64, longitude: f64) -> Qibla {
 #[tauri::command]
 fn quran_database(app: AppHandle) -> Result<quran::DatabaseInfo, String> {
     quran::ensure(&app)
+}
+
+/* ----------------------------- recitation ------------------------------- */
+
+#[tauri::command]
+fn reciters() -> Vec<recitation::Reciter> {
+    recitation::reciters()
+}
+
+#[tauri::command]
+fn recitation_status(
+    reciter: String,
+    surah: u16,
+    ayah_count: u16,
+) -> Result<recitation::SurahAudio, String> {
+    recitation::surah_status(&reciter, surah, ayah_count)
+}
+
+/// Stores one ayah the frontend has fetched. See recitation.rs for why the
+/// download itself lives on that side.
+#[tauri::command]
+fn store_recitation(
+    reciter: String,
+    surah: u16,
+    ayah: u16,
+    bytes: Vec<u8>,
+) -> Result<(), String> {
+    recitation::store(recitation::StoreRequest { reciter, surah, ayah, bytes })
+}
+
+/// Absolute path of a cached ayah, for the player to load through the asset
+/// protocol. Errors when it is not on disk, so §4.2's "never a silent failure"
+/// holds.
+#[tauri::command]
+fn recitation_path(reciter: String, surah: u16, ayah: u16) -> Result<String, String> {
+    let path = recitation::ayah_path(&reciter, surah, ayah)?;
+    if !path.is_file() {
+        return Err(format!("{surah}:{ayah} is not downloaded"));
+    }
+    Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+fn audio_cache_stats() -> recitation::CacheStats {
+    recitation::cache_stats()
+}
+
+#[tauri::command]
+fn clear_audio_cache() -> Result<(), String> {
+    recitation::clear_cache()
 }
 
 #[tauri::command]
@@ -451,6 +502,12 @@ pub fn run() {
             qibla,
             default_location,
             quran_database,
+            reciters,
+            recitation_status,
+            store_recitation,
+            recitation_path,
+            audio_cache_stats,
+            clear_audio_cache,
             get_settings,
             set_settings,
             status,

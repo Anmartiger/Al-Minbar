@@ -13,7 +13,14 @@
     "withGlobalTauri": false,
     "windows": [],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$APPCACHE/**",
+          "$CACHE/al-minabr/**"
+        ]
+      }
     }
   },
   "bundle": {

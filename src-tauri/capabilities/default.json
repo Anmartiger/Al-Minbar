@@ -2,7 +2,10 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Permissions for the main and mini windows.",
-  "windows": ["main", "mini"],
+  "windows": [
+    "main",
+    "mini"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-start-resize-dragging",
@@ -18,7 +21,11 @@
     "global-shortcut:default",
     {
       "identifier": "sql:allow-load",
-      "allow": [{ "path": "$APPDATA/al-minabr.db" }]
+      "allow": [
+        {
+          "path": "$APPDATA/al-minabr.db"
+        }
+      ]
     },
     "sql:allow-select",
     "sql:allow-execute",

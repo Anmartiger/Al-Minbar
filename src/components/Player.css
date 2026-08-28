@@ -1,0 +1,77 @@
+/* §7.2's persistent bottom player bar. */
+
+.player {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 20;
+  border-block-start: 1px solid var(--hairline);
+  padding: var(--space-3) var(--space-5);
+  flex: 0 0 auto;
+}
+
+.player-main { display: flex; align-items: center; gap: var(--space-2); }
+
+.player-ref { display: flex; flex-direction: column; min-inline-size: 96px; }
+.player-surah { font-family: var(--font-arabic); font-size: var(--text-body);
+                line-height: 1.4; letter-spacing: normal; }
+.player-ayah { font-size: var(--text-micro); color: var(--text-2);
+               font-variant-numeric: tabular-nums; }
+
+.player-scrub {
+  flex: 1;
+  min-inline-size: 80px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  block-size: 18px;
+  margin: 0;
+  cursor: default;
+}
+.player-scrub::-webkit-slider-runnable-track {
+  block-size: 4px; border-radius: var(--radius-full); background: var(--fill-quiet);
+}
+.player-scrub::-webkit-slider-thumb {
+  -webkit-appearance: none; inline-size: 12px; block-size: 12px;
+  margin-block-start: -4px; border-radius: var(--radius-full);
+  background: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.player-scrub:disabled { opacity: 0.4; }
+
+.player-select {
+  appearance: none;
+  border: 1px solid var(--hairline);
+  background: var(--fill-quieter);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-caption);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: default;
+  max-inline-size: 150px;
+}
+.player-speed { max-inline-size: 68px; }
+
+.player-download {
+  display: flex; align-items: center; gap: var(--space-3);
+  margin-block-start: var(--space-2);
+  font-size: var(--text-caption); color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.player-bar {
+  flex: 1; block-size: 4px; border-radius: var(--radius-full);
+  background: var(--fill-quiet); overflow: hidden;
+}
+.player-bar > span { display: block; block-size: 100%; background: var(--accent);
+                     transition: inline-size var(--duration-micro) var(--ease); }
+.player-size { min-inline-size: 64px; text-align: end; }
+
+/* §4.2: "never a silent failure" — the reason is always on screen. */
+.player-note {
+  margin-block-start: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--text-2);
+}
+
+.spin { animation: player-spin 1s linear infinite; }
+@keyframes player-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }

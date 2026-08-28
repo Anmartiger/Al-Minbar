@@ -558,3 +558,68 @@ Budget revised (2026-08-28, user's decision): **under 100 MB RSS in hidden mode*
 with PSS the number actually tracked. The requirement it protects is unchanged and
 still holds: no webview process exists in hidden mode, which is what separates a
 lightweight resident from the 250 MB idle process §8.1 warns about.
+
+---
+
+## 9. Quran decisions taken in Phase 4
+
+### 9.1 The mushaf line layout came from an unexpected place
+
+§4.2 names QUL for the King Fahd Complex 604-page line data, and says that if it
+"cannot be sourced, page mode falls back to 'verses that belong to page N, flowed' —
+and you tell me, rather than faking the line breaks."
+
+QUL puts its downloads behind a sign-in, so that fallback was where this was headed.
+But **quran.com's API v4 exposes the same KFGQPC layout** as a `line_number` on every
+word, with no account. Page mode therefore has genuine printed line breaks after
+all — 8,820 lines across 604 pages, 85% of them starting mid-verse.
+
+**The indexing needed pinning down rather than assuming.** 561 of those line starts
+point one word past the end of their verse. Had the two tokenisations genuinely
+diverged, every break on every page would have landed somewhere wrong while still
+looking entirely plausible. They have not: quran.com counts each verse's
+end-of-ayah marker as a final word, so the stream is `[w₁…wₙ, MARKER]` and every
+overshoot is exactly +1. The build script now refuses any other value, and all 604
+pages reconstruct with zero unresolved starts and zero tokens lost or duplicated.
+
+### 9.2 The basmalah is split without touching the text
+
+Tanzil prefixes the basmalah to verse 1 of every surah but At-Tawbah, and §7.2 wants
+it as a separate centred band. Editing it out is forbidden twice over — the Tanzil
+licence says "CHANGING IT IS NOT ALLOWED" and §12.3 covers religious content — so the
+**prefix length** is recorded and the renderer slices at display time. The stored
+text stays byte-for-byte what Tanzil publishes.
+
+Two things nearly went wrong here, both silent:
+
+- A hand-typed basmalah used as a comparison literal had **shadda and fatha
+  transposed**, so it matched nothing. It is now derived from the file's own 1:1.
+  Never type scripture; read it from the source.
+- Surahs **95 and 97** open with `بِّسْمِ` — a shadda on the bā, assimilated from the
+  end of the preceding surah. Genuine Uthmani orthography that byte-matching missed
+  entirely, so the match runs on the undiacriticised form.
+
+Al-Fatiha is deliberately exempt: there the basmalah *is* verse 1, not a prefix on it.
+
+### 9.3 Recitation is fetched by the frontend, written by Rust
+
+§4.2 wants per-surah download with visible progress. §3 lists no HTTP crate and §12.5
+says to ask before adding one — and the webview already has streaming `fetch`, which
+is exactly what a progress display needs. So the frontend downloads and hands bytes
+to Rust to write into the XDG cache.
+
+Downloads are sequential rather than parallel: it is someone else's free bandwidth,
+and a burst of concurrent requests would make the progress figure meaningless.
+Already-cached ayahs are skipped, so an interrupted download resumes. A single ayah
+failing does not abandon a 286-verse surah; the failure count is reported instead.
+
+The reciter id arrives from the frontend, so it is **checked against the known list
+rather than interpolated into a path** — otherwise it is a directory traversal into
+the user's filesystem. Covered by a test that tries.
+
+### 9.4 The verse highlight moves only on the verse boundary
+
+§7.2 is specific: "the highlight must move on the verse boundary, never mid-verse."
+One `<audio>` element is reused across verses and its `ended` event is the *only*
+thing that advances the highlight. Nothing is driven off `timeupdate`, which is what
+would let it drift mid-verse.
