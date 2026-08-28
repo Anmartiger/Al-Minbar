@@ -148,6 +148,13 @@ fn recitation_path(reciter: String, surah: u16, ayah: u16) -> Result<String, Str
     Ok(path.to_string_lossy().to_string())
 }
 
+/// Fallback for when the asset protocol will not serve the file. See
+/// recitation::read_ayah.
+#[tauri::command]
+fn read_recitation(reciter: String, surah: u16, ayah: u16) -> Result<Vec<u8>, String> {
+    recitation::read_ayah(&reciter, surah, ayah)
+}
+
 #[tauri::command]
 fn audio_cache_stats() -> recitation::CacheStats {
     recitation::cache_stats()
@@ -563,6 +570,7 @@ pub fn run() {
             recitation_status,
             store_recitation,
             recitation_path,
+            read_recitation,
             audio_cache_stats,
             clear_audio_cache,
             get_settings,

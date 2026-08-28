@@ -19,13 +19,62 @@ export const surahAudio = (reciter: string, surah: number, ayahCount: number) =>
 export const cacheStats = () => invoke<CacheStats>('audio_cache_stats');
 export const clearCache = () => invoke<void>('clear_audio_cache');
 
-/** Playable URL for a cached ayah, or null when it is not downloaded. */
-export async function ayahSource(reciter: string, surah: number, ayah: number) {
+/** Whether an ayah is on disk. */
+export async function ayahCached(reciter: string, surah: number, ayah: number) {
+  try {
+    await invoke<string>('recitation_path', { reciter, surah, ayah });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const blobs = new Map<string, string>();
+
+/**
+ * A playable URL for a cached ayah, or null when it is not downloaded.
+ *
+ * Prefers the asset protocol, which streams and seeks without copying the file.
+ * That path depends on a scope glob resolving correctly, though, and when it does
+ * not the failure is completely silent — the element just never plays, which is
+ * exactly what happened. So the caller can ask for a blob instead, built from
+ * bytes read by Rust, which cannot be misconfigured.
+ *
+ * Blob URLs are cached and revoked together, because creating one per verse for a
+ * 286-verse surah would leak the whole surah into memory.
+ */
+export async function ayahSource(
+  reciter: string, surah: number, ayah: number, viaBlob = false,
+): Promise<string | null> {
+  const key = `${reciter}/${surah}/${ayah}`;
+  if (viaBlob) {
+    const existing = blobs.get(key);
+    if (existing) return existing;
+    try {
+      const bytes = await invoke<number[]>('read_recitation', { reciter, surah, ayah });
+      const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'audio/mpeg' }));
+      // Keep only a small window; anything older is not being listened to.
+      if (blobs.size > 3) {
+        const [oldestKey, oldestUrl] = blobs.entries().next().value!;
+        URL.revokeObjectURL(oldestUrl);
+        blobs.delete(oldestKey);
+      }
+      blobs.set(key, url);
+      return url;
+    } catch {
+      return null;
+    }
+  }
   try {
     return convertFileSrc(await invoke<string>('recitation_path', { reciter, surah, ayah }));
   } catch {
     return null;
   }
+}
+
+export function releaseSources() {
+  for (const url of blobs.values()) URL.revokeObjectURL(url);
+  blobs.clear();
 }
 
 const pad3 = (n: number) => String(n).padStart(3, '0');
@@ -56,7 +105,7 @@ export async function downloadSurah(
   for (let ayah = 1; ayah <= ayahCount; ayah++) {
     if (signal?.aborted) break;
 
-    if (await ayahSource(reciter.id, surah, ayah)) {
+    if (await ayahCached(reciter.id, surah, ayah)) {
       progress.done++;
       onProgress({ ...progress });
       continue;

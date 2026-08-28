@@ -5,7 +5,7 @@ import {
 import { Badge, IconButton, Material, Tooltip } from './ui';
 import {
   ayahSource, downloadSurah, formatBytes, listReciters, playbackBlockedReason,
-  surahAudio, type DownloadProgress, type Reciter, type SurahAudio,
+  releaseSources, surahAudio, type DownloadProgress, type Reciter, type SurahAudio,
 } from '../lib/recitation';
 import './Player.css';
 
@@ -39,7 +39,13 @@ export default function Player({
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const [position, setPosition] = useState({ at: 0, of: 0 });
   const [online, setOnline] = useState(navigator.onLine);
+  const [problem, setProblem] = useState<string | null>(null);
+  /** Set once the asset protocol has failed, so later verses skip straight to
+   *  the path that works instead of stalling on each one. */
+  const [useBlob, setUseBlob] = useState(false);
   const abort = useRef<AbortController | null>(null);
+
+  useEffect(() => () => releaseSources(), []);
 
   useEffect(() => {
     listReciters().then(r => { setReciters(r); setReciter(r[0] ?? null); });
@@ -57,19 +63,46 @@ export default function Player({
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  /* Load and play whichever ayah is current. */
+  /* Load and play whichever ayah is current.
+     §4.2: "never a silent failure" — if playback will not start, the reason goes
+     on screen rather than leaving a dead play button. */
   useEffect(() => {
     const el = audio.current;
     if (!el || !reciter || currentAyah == null) return;
     let alive = true;
-    ayahSource(reciter.id, target.surah, currentAyah).then(src => {
-      if (!alive || !src) { if (alive) setPlaying(false); return; }
+
+    const start = async (viaBlob: boolean): Promise<boolean> => {
+      const src = await ayahSource(reciter.id, target.surah, currentAyah, viaBlob);
+      if (!alive || !src) return false;
       el.src = src;
       el.playbackRate = speed;
-      el.play().then(() => alive && setPlaying(true)).catch(() => alive && setPlaying(false));
-    });
+      try {
+        await el.play();
+        return alive;
+      } catch {
+        return false;
+      }
+    };
+
+    (async () => {
+      if (await start(useBlob)) {
+        if (alive) { setPlaying(true); setProblem(null); }
+        return;
+      }
+      // The asset protocol did not serve it. Fall back to bytes read by Rust,
+      // and remember, so the rest of the surah does not retry the dead path.
+      if (!useBlob && await start(true)) {
+        if (alive) { setUseBlob(true); setPlaying(true); setProblem(null); }
+        return;
+      }
+      if (alive) {
+        setPlaying(false);
+        setProblem(`Could not play ${target.surah}:${currentAyah}.`);
+      }
+    })();
+
     return () => { alive = false; };
-  }, [currentAyah, reciter, target.surah, speed]);
+  }, [currentAyah, reciter, target.surah, speed, useBlob]);
 
   /* §7.2: "the highlight must move on the verse boundary, never mid-verse" -
      so advancing happens only here, when the element reports the verse ended. */
@@ -228,6 +261,7 @@ export default function Player({
       )}
 
       {blocked && !downloading && <div className="player-note">{blocked}</div>}
+      {!blocked && problem && <div className="player-note">{problem}</div>}
     </Material>
   );
 }

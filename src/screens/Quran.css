@@ -7,11 +7,17 @@
 .quran-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-6);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
   border-block-end: 1px solid var(--hairline);
   flex: 0 0 auto;
+  /* §10: "No horizontal scrollbar at the minimum window size." The toolbar used
+     a fixed-width search and could not shrink, so it pushed the reader sideways
+     in a narrow window. It wraps now, and the search gives way first. */
+  flex-wrap: wrap;
+  min-inline-size: 0;
 }
+.quran-bar-search { flex: 1 1 180px; min-inline-size: 120px; max-inline-size: 280px; }
 .quran-bar-title { display: flex; align-items: baseline; gap: var(--space-2); min-inline-size: 0; }
 .quran-bar-name {
   font-family: var(--font-arabic);
@@ -21,10 +27,15 @@
   white-space: nowrap;
 }
 .quran-bar-sub { font-size: var(--text-caption); color: var(--text-2); white-space: nowrap; }
-.quran-bar .spacer { flex: 1; }
+.quran-bar .spacer { flex: 1 1 0; min-inline-size: 0; }
 
 .quran-body { flex: 1; min-height: 0; display: flex; }
-.quran-scroll { flex: 1; min-width: 0; overflow-y: auto; }
+.quran-scroll {
+  flex: 1; min-width: 0; overflow-y: auto;
+  /* Smooth wheel scrolling without the jank of animating a transform. */
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
 
 /* --------------------------- surah browser ------------------------------ */
 
@@ -58,7 +69,8 @@
   /* §7.2: "comfortable measure (max-inline-size: 70ch)". */
   max-inline-size: 70ch;
   margin-inline: auto;
-  padding: var(--space-6) var(--space-6) var(--space-10);
+  padding: var(--space-6) var(--space-5) var(--space-10);
+  min-inline-size: 0;
 }
 
 .verse-block {
@@ -74,6 +86,8 @@
 .verse-text {
   font-family: var(--font-quran);
   font-size: var(--quran-size, 30px);
+  /* Long Uthmani words must break rather than run off the edge in a narrow window. */
+  overflow-wrap: break-word;
   /* Never below 2.0 — Amiri Quran's own line box is 2.449em and tashkeel clips
      under it (DESIGN_NOTES.md §2.2). */
   line-height: var(--quran-line-height, 2.1);
@@ -90,22 +104,27 @@
   display: inline-grid;
   place-items: center;
   position: relative;
-  font-family: var(--font-quran);
-  font-size: 1.15em;
+  inline-size: 1.5em;
+  block-size: 1.5em;
   color: var(--accent);
   vertical-align: middle;
-  margin-inline: 0.15em;
+  margin-inline: 0.2em;
   user-select: none;
+  flex: 0 0 auto;
 }
-.ayah-marker-glyph { grid-area: 1 / 1; }
+.ayah-marker svg { grid-area: 1 / 1; inline-size: 100%; block-size: 100%; opacity: 0.55; }
 .ayah-marker-number {
   grid-area: 1 / 1;
-  font-family: var(--font-arabic);
-  font-size: 0.4em;
+  font-family: var(--font-latin);
+  font-size: 0.42em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
-  letter-spacing: normal;
-  padding-block-start: 0.06em;
+  letter-spacing: 0;
+  color: var(--accent);
 }
+/* Arabic-Indic digits need the Arabic face and sit slightly differently. */
+:root[lang='ar'] .ayah-marker-number { font-family: var(--font-arabic); font-size: 0.46em; }
 
 .verse-translation {
   margin-block-start: var(--space-3);
@@ -201,7 +220,8 @@
 /* §7.2: "Tafsir and translation open in a right-side panel, not a modal, so
    reading continues." */
 .quran-panel {
-  flex: 0 0 360px;
+  flex: 0 1 340px;
+  min-inline-size: 0;
   border-inline-start: 1px solid var(--hairline);
   overflow-y: auto;
   padding: var(--space-5);

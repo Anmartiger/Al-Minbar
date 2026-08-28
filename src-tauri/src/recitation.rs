@@ -137,6 +137,18 @@ pub fn surah_status(reciter: &str, surah: u16, ayah_count: u16) -> Result<SurahA
     Ok(SurahAudio { reciter: reciter.to_string(), surah, cached, total: ayah_count, bytes })
 }
 
+/// Reads a cached ayah back as bytes.
+///
+/// The player prefers the asset protocol, which streams and seeks properly. This
+/// exists because that protocol depends on a scope glob resolving correctly, and
+/// when it does not the failure is silent — the element simply never plays. Having
+/// a path that cannot be misconfigured means audio works regardless, and the
+/// player falls back to it rather than leaving the user with a dead play button.
+pub fn read_ayah(reciter: &str, surah: u16, ayah: u16) -> Result<Vec<u8>, String> {
+    let path = ayah_path(reciter, surah, ayah)?;
+    std::fs::read(&path).map_err(|e| format!("{surah}:{ayah} could not be read: {e}"))
+}
+
 #[derive(Deserialize)]
 pub struct StoreRequest {
     pub reciter: String,

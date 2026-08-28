@@ -6,6 +6,7 @@ import {
   Badge, EmptyState, IconButton, List, ListRow, SearchField, SegmentedControl, Skeleton, Tooltip,
 } from '../components/ui';
 import { toDigits } from '../lib/prayer-math';
+import { useT } from '../lib/i18n';
 import {
   linesForPage, listBookmarks, listSurahs, normaliseArabic, parseReference,
   quranDatabase, readingState, saveReadingState, searchVerses, tafsirFor, toggleBookmark,
@@ -33,12 +34,24 @@ function SurahFrame({ n, arabicIndic }: { n: number; arabicIndic: boolean }) {
   );
 }
 
-/** §5.3's end-of-ayah symbol with the number laid inside it. */
+/**
+ * §5.3: "Verse-end markers use the Quranic end-of-ayah symbol ۝ (U+06DD) with the
+ * number composed inside where the font supports it; otherwise render a circular
+ * badge."
+ *
+ * Amiri Quran carries U+06DD but does not compose digits into it, so laying the
+ * number over the glyph left it unreadable — the two were the same colour and the
+ * rosette is dense. This is the badge fallback: the mushaf's own eight-pointed
+ * rosette drawn as an outline, with the number legible inside it.
+ */
 function AyahMarker({ n, arabicIndic }: { n: number; arabicIndic: boolean }) {
   return (
     <span className="ayah-marker" aria-label={`Verse ${n}`}>
-      <span className="ayah-marker-glyph" aria-hidden>{'۝'}</span>
-      <span className="ayah-marker-number" aria-hidden>{toDigits(n, arabicIndic)}</span>
+      <svg viewBox="0 0 32 32" aria-hidden focusable="false">
+        <path d="M16 2.5 19.7 6.9 25.4 6.9 25.4 12.6 29.5 16 25.4 19.4 25.4 25.1 19.7 25.1 16 29.5 12.3 25.1 6.6 25.1 6.6 19.4 2.5 16 6.6 12.6 6.6 6.9 12.3 6.9Z"
+          fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+      <span className="ayah-marker-number">{toDigits(n, arabicIndic)}</span>
     </span>
   );
 }
@@ -52,6 +65,7 @@ const basmalahOf = (v: Verse) =>
   v.bismillah_prefix > 0 ? v.text_uthmani.slice(0, v.bismillah_prefix).trim() : null;
 
 export default function Quran({ arabicIndic }: { arabicIndic: boolean }) {
+  const { t } = useT();
   const [available, setAvailable] = useState<boolean | null>(null);
   const [surahs, setSurahs] = useState<Surah[]>([]);
   const [surah, setSurah] = useState<number | null>(null);
@@ -210,14 +224,13 @@ export default function Quran({ arabicIndic }: { arabicIndic: boolean }) {
           </span>
         )}
         <span className="spacer" />
-        <div style={{ inlineSize: 260 }}>
-          <SearchField value={query} onChange={setQuery}
-            placeholder="Search — الرحمن, Baqara, or 2:255" />
+        <div className="quran-bar-search">
+          <SearchField value={query} onChange={setQuery} placeholder={t('quran.search')} />
         </div>
         <SegmentedControl
           options={[
-            { value: 'reading' as const, label: 'Reading' },
-            { value: 'mushaf' as const, label: 'Mushaf' },
+            { value: 'reading' as const, label: t('quran.reading') },
+            { value: 'mushaf' as const, label: t('quran.mushaf') },
           ]}
           value={mode}
           onChange={m => {

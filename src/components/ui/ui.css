@@ -8,23 +8,14 @@
 .material-regular { background: var(--material-regular-solid); }
 .material-thick   { background: var(--material-thick-solid); }
 
-/* Translucency only where WebKitGTK actually supports it. The opaque rules above
-   stay as the base, so the layout is pixel-identical either way. */
-[data-backdrop="yes"] .material-thin {
-  background: var(--material-thin-bg);
-  backdrop-filter: blur(var(--material-blur-thin)) saturate(var(--material-saturate));
-  -webkit-backdrop-filter: blur(var(--material-blur-thin)) saturate(var(--material-saturate));
-}
-[data-backdrop="yes"] .material-regular {
-  background: var(--material-regular-bg);
-  backdrop-filter: blur(var(--material-blur-regular)) saturate(var(--material-saturate));
-  -webkit-backdrop-filter: blur(var(--material-blur-regular)) saturate(var(--material-saturate));
-}
-[data-backdrop="yes"] .material-thick {
-  background: var(--material-thick-bg);
-  backdrop-filter: blur(var(--material-blur-thick)) saturate(var(--material-saturate));
-  -webkit-backdrop-filter: blur(var(--material-blur-thick)) saturate(var(--material-saturate));
-}
+/* Translucency is switched off: the app is opaque by request. The three Material
+   levels remain as solid surfaces at the lightness the translucent versions
+   resolved to, so the layering still reads.
+
+   Removing backdrop-filter also removes the repaint it forced on every scroll
+   frame over a blurred layer, which is most of what made scrolling feel heavy.
+   §6.4's feature detection is left in place: if translucency is ever restored,
+   the fallback path it guards is still there. */
 
 /* ============================== Card =================================== */
 
@@ -388,11 +379,13 @@
 /* ============================= Tooltip ================================= */
 
 .tooltip-anchor { position: relative; display: inline-flex; }
+.tooltip-anchor > .tooltip { pointer-events: none; }
 .tooltip {
   position: absolute;
   inset-block-end: calc(100% + var(--space-2));
   inset-inline-start: 50%;
   translate: -50% 0;
+  z-index: 60;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-xs);
   background: var(--tooltip-bg);
@@ -401,7 +394,11 @@
   white-space: nowrap;
   pointer-events: none;
   box-shadow: var(--shadow-md);
-  z-index: 50;
+}
+/* Flipped below when the anchor sits near the top edge. */
+.tooltip[data-place='below'] {
+  inset-block-end: auto;
+  inset-block-start: calc(100% + var(--space-2));
 }
 
 /* ============================= Popover ================================= */

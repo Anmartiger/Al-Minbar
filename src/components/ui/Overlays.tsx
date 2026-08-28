@@ -136,13 +136,25 @@ export function Popover({ trigger, children, label }: {
 /** Reveals on hover *and* focus - keyboard users get it too. */
 export function Tooltip({ text, children }: { text: string; children: ReactNode }) {
   const [shown, setShown] = useState(false);
+  const [place, setPlace] = useState<'above' | 'below'>('above');
+  const anchor = useRef<HTMLSpanElement>(null);
   const id = useId();
+
+  /** Opening upward is the default, but anything near the top edge would put its
+   *  label off-window — which is what hid the first rail item's label entirely. */
+  const reveal = () => {
+    const box = anchor.current?.getBoundingClientRect();
+    setPlace(box && box.top < 56 ? 'below' : 'above');
+    setShown(true);
+  };
+
   return (
     <span
+      ref={anchor}
       className="tooltip-anchor"
-      onMouseEnter={() => setShown(true)}
+      onMouseEnter={reveal}
       onMouseLeave={() => setShown(false)}
-      onFocusCapture={() => setShown(true)}
+      onFocusCapture={reveal}
       onBlurCapture={() => setShown(false)}
       aria-describedby={shown ? id : undefined}
     >
@@ -150,7 +162,7 @@ export function Tooltip({ text, children }: { text: string; children: ReactNode 
       <AnimatePresence>
         {shown && (
           <motion.span
-            className="tooltip" role="tooltip" id={id}
+            className="tooltip" data-place={place} role="tooltip" id={id}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: DURATION.micro }}
           >

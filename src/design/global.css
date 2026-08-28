@@ -18,12 +18,7 @@ body::before {
   position: fixed;
   inset: var(--window-margin, 0px);
   border-radius: var(--radius-xl);
-  background: rgba(var(--window-tint), var(--window-opacity));
-  /* Blurs page content behind this layer. It cannot blur the *desktop* behind the
-     window - that needs compositor cooperation GNOME does not offer an app.
-     See DESIGN_NOTES.md §8. */
-  backdrop-filter: blur(var(--window-blur)) saturate(var(--window-saturate));
-  -webkit-backdrop-filter: blur(var(--window-blur)) saturate(var(--window-saturate));
+  background: var(--bg);
   z-index: -1;
   pointer-events: none;
 }
@@ -43,6 +38,9 @@ html[data-backdrop='no'] body::before {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+
+/* Thin scrollbars everywhere; the platform's default is heavy over dark surfaces. */
+* { scrollbar-width: thin; }
 
 body {
   background: transparent;

@@ -79,9 +79,12 @@
   /* ---- Materials §6.4 ------------------------------------------------- */
   /* Translucency where WebKitGTK supports backdrop-filter, an opaque surface at
      the same apparent lightness where it does not. Layout is identical either way. */
-  --material-thin-bg: rgba(255, 255, 255, 0.60);
-  --material-regular-bg: rgba(255, 255, 255, 0.72);
-  --material-thick-bg: rgba(255, 255, 255, 0.85);
+  /* Opaque by request: no translucency, no blur. The Material primitive still
+     exists and still gives three surface levels, but they are solid colours at
+     the lightness the translucent versions used to resolve to. */
+  --material-thin-bg: #FCFCFA;
+  --material-regular-bg: #FDFDFB;
+  --material-thick-bg: #FEFEFD;
   --material-thin-solid: #FCFCFA;
   --material-regular-solid: #FDFDFB;
   --material-thick-solid: #FEFEFD;
@@ -107,9 +110,9 @@
   /* How much of the desktop shows through the window. 1 = fully opaque.
      Lower it for more see-through; the text tokens keep their contrast because
      the surfaces above this layer are painted separately. */
-  --window-opacity: 0.78;
+  --window-opacity: 1;
   --window-tint: 247, 246, 243;   /* --bg as rgb, for the translucent fill */
-  --window-blur: 30px;
+  --window-blur: 0px;
   --window-saturate: 180%;
 
   /* ---- Page structure -------------------------------------------------
@@ -161,9 +164,9 @@
   --accent-slate: #5A97D2;
 
 
-  --material-thin-bg: rgba(28, 28, 27, 0.60);
-  --material-regular-bg: rgba(28, 28, 27, 0.72);
-  --material-thick-bg: rgba(28, 28, 27, 0.85);
+  --material-thin-bg: #1A1A19;
+  --material-regular-bg: #1B1B1A;
+  --material-thick-bg: #1C1C1B;
   --material-thin-solid: #1A1A19;
   --material-regular-solid: #1B1B1A;
   --material-thick-solid: #1C1C1B;

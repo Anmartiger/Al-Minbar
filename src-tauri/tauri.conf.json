@@ -17,8 +17,9 @@
       "assetProtocol": {
         "enable": true,
         "scope": [
-          "$APPCACHE/**",
-          "$CACHE/al-minabr/**"
+          "$HOME/.cache/al-minabr/**",
+          "$CACHE/al-minabr/**",
+          "$APPCACHE/**"
         ]
       }
     }

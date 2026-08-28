@@ -8,6 +8,9 @@
   gap: var(--space-1);
   padding: var(--space-3) var(--space-2);
   border-inline-end: 1px solid var(--hairline);
+  /* Labels extend past the rail's width; clipping them is what hid them. */
+  overflow: visible;
+  z-index: 5;
 }
 
 .nav-item {
