@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getName } from '@tauri-apps/api/app';
+import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { WindowFrame, useWindowChrome } from './components/WindowFrame';
 import Nav from './components/Nav';
@@ -89,7 +90,20 @@ export default function App() {
     getName().then(n => { setName(n); document.title = n; }).catch(() => {});
     // The tray's Settings item and the desktop Action both route through here.
     const un = listen('open-settings', () => { location.hash = ROUTES.settings; });
-    return () => { un.then(f => f()).catch(() => {}); };
+    // §8.4: "Quit is explicit: the tray menu, or Ctrl+Q." Closing the window only
+    // returns the app to the panel, and the notice shown when that first happens
+    // promises this shortcut - so it has to exist.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'q') {
+        e.preventDefault();
+        void invoke('quit');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      un.then(f => f()).catch(() => {});
+      window.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   useEffect(() => {

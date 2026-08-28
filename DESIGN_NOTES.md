@@ -811,19 +811,38 @@ The icons were the reverse mistake: `deb.files` did place 16/48/64/256 into hico
 but only in the `.deb`. Listing them in `bundle.icon` instead deploys the same eight
 sizes to the AppImage as well, from one source of truth.
 
-### 13.3 `productName` names the desktop file, so the display name moved
+### 13.3 The desktop file keeps the capitalised name, against §8.1
 
 §8.1 wants `al-minabr.desktop`. The bundler builds that filename with
-`format!("{product_name}.desktop")` and offers no separate setting, so `productName`
-had to become lowercase. The same variable feeds `Name=` in the desktop entry and
-`package_info().name` in Rust, which is what titles the main window — so both now
-carry the capitalised name literally instead. Renaming was safe for everything else:
-the XDG directories come from `ProjectDirs`, not from `productName`.
+`format!("{product_name}.desktop")` and offers no separate setting, so getting it
+means making `productName` lowercase — and §1 makes `productName` the single source
+of the *display* name:
 
-The entry gained `Name[ar]`, `Comment[ar]`, `Keywords[ar]` and Arabic names for all
-three `Actions` while it was being rewritten. An app whose primary language is
-Arabic should be findable in the app grid by typing `صلاة`. `desktop-file-validate`
-passes on the generated file.
+> The name lives once, in `src-tauri/tauri.conf.json`; every other surface reads it
+> from there. Do not hard-code the product name in a component.
+
+`getName()` feeds `document.title` and the visible titlebar, so lowercasing
+`productName` renamed the app to "al-minabr" in the title bar of every window. It
+was shipped that way briefly and reverted.
+
+The two requirements cannot both hold through one variable, so this takes the
+deviation where nobody can see it. The installed file is `Al-Minabr.desktop`; every
+other identifier §1 lists is unaffected — binary `al-minabr`, `com.alminabr.app`,
+`StartupWMClass=al-minabr`, XDG dirs `al-minabr`, and the autostart entry the app
+writes itself at `~/.config/autostart/al-minabr.desktop`. Nothing keys off the
+filename: the grid shows `Name=`, the dock groups by `StartupWMClass`.
+
+The entry also gained `Name[ar]`, `Comment[ar]`, `Keywords[ar]` and Arabic names for
+all three `Actions`. An app whose primary language is Arabic should be findable in
+the app grid by typing `صلاة`. `desktop-file-validate` passes on the result.
+
+### 13.3.1 §8.4's Ctrl+Q was promised but never bound
+
+The notice shown the first time the window closes to the panel reads "Quit from the
+tray menu or Ctrl+Q", and §8.4 requires it — "Quit is explicit: the tray menu, or
+`Ctrl+Q`". No handler existed. Found while checking the README's claims against the
+code rather than by using the app, which is the uncomfortable part: nothing else
+would have caught a shortcut that silently does nothing.
 
 ### 13.4 Closing the window destroys it, rather than hiding it
 
