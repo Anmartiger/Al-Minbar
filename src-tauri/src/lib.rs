@@ -584,16 +584,30 @@ pub fn run() {
         ])
         .on_menu_event(|app, event| handle_menu(app, event.id().as_ref()))
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
                 let app = window.app_handle();
                 let state = app.state::<AppState>();
                 let settings = state.snapshot();
-                // §8.4: "Closing the window does not quit the app - it returns to
-                // background operation, with a one-time toast the first time it
-                // happens so nobody thinks it crashed."
-                if window.label() == windows::MAIN && !settings.startup.close_to_quit {
-                    api.prevent_close();
-                    let _ = window.hide();
+                if window.label() == windows::MAIN {
+                    if settings.startup.close_to_quit {
+                        // Exit explicitly. Letting the close fall through would
+                        // raise ExitRequested, which is prevented below so that
+                        // closing to the panel does not quit - leaving this switch
+                        // doing nothing at all.
+                        app.exit(0);
+                        return;
+                    }
+                    // §8.4: "Closing the window does not quit the app - it returns
+                    // to background operation, with a one-time toast the first time
+                    // it happens so nobody thinks it crashed."
+                    //
+                    // The close is allowed to proceed rather than prevented, so the
+                    // window is destroyed and takes its webview with it. §10
+                    // measures background mode as "under 60 MB ... and no webview
+                    // process alive", and merely hiding the window leaves
+                    // WebKitWebProcess resident at around 200 MB - more than three
+                    // times the whole budget. show_main() rebuilds it on demand,
+                    // which is the same path a first launch takes.
                     if !settings.seen_close_to_tray_notice {
                         let mut updated = settings;
                         updated.seen_close_to_tray_notice = true;

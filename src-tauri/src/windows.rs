@@ -82,7 +82,11 @@ pub fn show_main(app: &AppHandle) -> tauri::Result<WebviewWindow> {
     let pad = chrome.shadow_margin * 2.0;
     let win = WebviewWindowBuilder::new(app, MAIN, WebviewUrl::default())
         .initialization_script(&session_script(chrome))
-        .title(app.package_info().name.clone())
+        // Written out rather than taken from package_info(), which returns
+        // productName - and productName is lowercase so the bundler names the
+        // desktop file al-minabr.desktop (§8.1). The title is what shows in the
+        // window list.
+        .title("Al-Minabr")
         .decorations(false)
         .transparent(chrome.transparent)
         .inner_size(1180.0 + pad, 820.0 + pad)
