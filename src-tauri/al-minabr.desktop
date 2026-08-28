@@ -1,12 +1,18 @@
 [Desktop Entry]
 Type=Application
-Name={{name}}
+# The display name is written out rather than taken from {{name}}, because that
+# variable is productName — which also names this file, and §8.1 wants the file
+# lowercase (`al-minabr.desktop`) while the grid entry stays capitalised.
+Name=Al-Minabr
+Name[ar]=المنبر
 Comment={{comment}}
+Comment[ar]=مواقيت الصلاة والقرآن والأذكار والقبلة
 Exec={{exec}} %U
 Icon={{icon}}
 Terminal=false
 Categories={{categories}}
 Keywords=prayer;salah;salat;athan;adhan;quran;qibla;hijri;islam;muslim;
+Keywords[ar]=صلاة;أذان;قرآن;أذكار;قبلة;هجري;مواقيت;
 {{#if mime_type}}MimeType={{mime_type}}
 {{/if}}
 # §8.4: "The .desktop file's StartupWMClass must match the window's WM class so the
@@ -22,12 +28,15 @@ Actions=Quran;Timetable;Settings;
 
 [Desktop Action Quran]
 Name=Open Quran
+Name[ar]=فتح القرآن
 Exec={{exec}} --quran
 
 [Desktop Action Timetable]
 Name=Today's timetable
+Name[ar]=مواقيت اليوم
 Exec={{exec}} --toggle
 
 [Desktop Action Settings]
 Name=Settings
+Name[ar]=الإعدادات
 Exec={{exec}} --settings

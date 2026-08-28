@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Al-Minabr",
+  "productName": "al-minabr",
   "version": "0.1.0",
   "identifier": "com.alminabr.app",
   "build": {
@@ -31,9 +31,13 @@
       "appimage"
     ],
     "icon": [
+      "icons/16x16.png",
       "icons/32x32.png",
+      "icons/48x48.png",
+      "icons/64x64.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
+      "icons/256x256.png",
       "icons/icon.png"
     ],
     "category": "Utility",
@@ -41,13 +45,17 @@
     "longDescription": "Accurate offline prayer times with adhan and desktop notifications, the full Uthmani Quran with recitation, athkar with tap counters, qibla bearing and a Hijri calendar.",
     "linux": {
       "deb": {
-        "depends": [],
         "desktopTemplate": "al-minabr.desktop"
+      },
+      "appimage": {
+        "bundleMediaFramework": true
       }
     },
     "resources": [
       "resources/quran.db",
       "resources/content.version"
-    ]
+    ],
+    "publisher": "Al-Minabr",
+    "copyright": "See the in-app About the data screen for bundled text licences."
   }
 }
